@@ -273,10 +273,9 @@ def extract_images_and_temps_from_video():
     else:
         frame_range = range(0, movie.frame_count, int(movie.frame_rate * 15))
     for frame_number in frame_range:
-        movie.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
         time_in_seconds = frame_number / movie.frame_rate
-        ret, frame = movie.cap.read()
-        if ret:
+        frame = movie.get_frame_number(frame_number)
+        if frame is not None:
             hms_safe = movie.hhmmss(frame_number, filename_safe=True)
             hms = movie.hhmmss(frame_number)
             image_file = os.path.join(output_images_dir, f'image_{hms_safe}.png')
