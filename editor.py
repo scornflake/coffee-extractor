@@ -1,14 +1,24 @@
 import tkinter
 
+import cv2
+from PIL import ImageTk, Image
+
+from movie import Movie
 from settings import Settings
 
 
 # Basic UI that has a set of controls on the left (west), and a canvas taking up the rest of the right hand (east) side.
 class Editor:
     def __init__(self, master, the_settings: Settings):
+        self.video_canvas = None
+        self.imagetk = None
+        self.image = None
         self.master = master
         self.settings = the_settings
         self.master.title("Editor")
+
+        self.movie = Movie(self.settings.movie_file)
+        self.video_frame = None
 
         self.master.grid_rowconfigure(0, weight=1)
         self.master.grid_columnconfigure(1, weight=1)
@@ -17,18 +27,30 @@ class Editor:
         self.controls.grid(row=0, column=0, sticky="nsew")
         self.editing_controls(self.controls)
 
-        self.canvas = tkinter.Canvas(self.master, bg="red")
-        self.canvas.grid(row=0, column=1, sticky="nsew")
-        self.canvas_view(self.canvas)
+        self.main_root_canvas = tkinter.Frame(self.master, bg="red")
+        self.main_root_canvas.grid(row=0, column=1, sticky="nsew")
+        # self.canvas_view(self.main_root_canvas)
 
-    # A canvas, that'll hold a picture of what we're doing
+        self.update_canvas()
+
     def canvas_view(self, master):
-        canvas = tkinter.Canvas(master)
-        canvas.grid(row=0, column=1, sticky="nsew")
+        self.video_canvas = tkinter.Canvas(master)
+        self.video_canvas.grid(row=0, column=1, sticky="nsew")
+        return self.video_canvas
 
-        return canvas
+    def update_canvas(self):
+        # Generate a frame from the movie and the digital area
+        a_video_frame = self.movie.get_frame_number(400)
 
-    # Generate a frame from the movie and the digital area
+        corrected = cv2.cvtColor(a_video_frame, cv2.COLOR_BGR2RGB)
+        # remove alpha channel
+        corrected = corrected[:, :, :3]
+
+        self.image = Image.fromarray(corrected)
+        self.imagetk = ImageTk.PhotoImage(self.image)
+        self.video_canvas = tkinter.Label(self.main_root_canvas, image=self.imagetk)
+        self.video_canvas.grid(row=0, column=0, sticky="nsew")
+        self.video_canvas.image = self.imagetk
 
     # Basic controls to adjust the canvas. left/top/width/height boxes.
     def editing_controls(self, master):
@@ -69,6 +91,7 @@ class Editor:
 
         # Return the frame
         return frame
+
 
 import args
 
