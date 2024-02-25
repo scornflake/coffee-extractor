@@ -6,9 +6,7 @@ import time
 import json
 import subprocess
 
-import numpy as np
 import pytesseract
-import digital_area
 from extraction import find_temperature_of_frame
 from movie import Movie
 from settings import Settings
@@ -46,6 +44,8 @@ json_output = {
 
 movie = Movie(settings.movie_file)
 output_images_dir = os.path.join(settings.output_dir, 'images')
+# Make sure this dir exists
+os.makedirs(output_images_dir, exist_ok=True)
 
 
 def write_image(image, frame_number, identifier):
@@ -75,7 +75,9 @@ def is_temp_jmp_sensible(last_value, next_value) -> bool:
 
     distance = abs(last_value - next_value)
     sensible = False
-    if last_value < 90:
+    if last_value < 50:
+        sensible = next_value < last_value * 3.5
+    elif last_value < 90:
         sensible = next_value < last_value * 2
     elif last_value < 120:
         sensible = next_value < last_value * 1.5
@@ -196,7 +198,7 @@ images, temps = extract_images_and_temps_from_video()
 json_output['images'] = images
 json_output['chamber_temps'] = temps
 
-# extract_audio_from_movie()
+extract_audio_from_movie()
 write_times_to_own_csv(temperatures=temps)
 
 # Write this to metadata.json, within the output directory

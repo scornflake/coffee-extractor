@@ -93,15 +93,20 @@ class Editor:
     def create_or_update_ui_overlay(self):
         bottom_left = self.settings.digital_area.bottom_left_skewed(self.settings.lcd_quad_skew)
         bottom_right = self.settings.digital_area.bottom_right_skewed(self.settings.lcd_quad_skew)
-        self.overlay_polygon = self.video_canvas.create_polygon(
-            self.settings.digital_area.top_left,
-            self.settings.digital_area.top_right,
-            bottom_right,
-            bottom_left,
-            fill="",
-            outline="green",
-            width=3,
-        )
+        if self.overlay_polygon:
+            self.video_canvas.delete(self.overlay_polygon)
+            self.overlay_polygon = None
+
+        if self.overlay_polygon is None:
+            self.overlay_polygon = self.video_canvas.create_polygon(
+                self.settings.digital_area.top_left,
+                self.settings.digital_area.top_right,
+                bottom_right,
+                bottom_left,
+                fill="",
+                outline="green",
+                width=3,
+            )
 
     def put_movie_frame_onto_video_canvas(self):
         # Generate a frame from the movie and the digital area
@@ -175,6 +180,7 @@ class Editor:
         def update_skew(event):
             def update_skew_v(value):
                 self.settings.lcd_quad_skew = value
+                self.create_or_update_ui_overlay()
 
             self.get_int_from_entry(event, update_skew_v)
 
@@ -182,24 +188,28 @@ class Editor:
         def update_left(event):
             def update_left_v(value):
                 self.settings.digital_area.left = value
+                self.create_or_update_ui_overlay()
 
             self.get_int_from_entry(event, update_left_v)
 
         def update_top(event):
             def update_top_v(value):
                 self.settings.digital_area.top = value
+                self.create_or_update_ui_overlay()
 
             self.get_int_from_entry(event, update_top_v)
 
         def update_width(event):
             def update_width_v(value):
                 self.settings.digital_area.width = value
+                self.create_or_update_ui_overlay()
 
             self.get_int_from_entry(event, update_width_v)
 
         def update_height(event):
             def update_height_v(value):
                 self.settings.digital_area.height = value
+                self.create_or_update_ui_overlay()
 
             self.get_int_from_entry(event, update_height_v)
 
@@ -216,7 +226,6 @@ class Editor:
         try:
             int_value = int(value)
             handler(int_value)
-            self.create_or_update_ui_overlay()
         except ValueError:
             print(f"Invalid value {value} for event...")
             return
