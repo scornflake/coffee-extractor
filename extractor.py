@@ -9,6 +9,7 @@ import subprocess
 import numpy as np
 import pytesseract
 import digital_area
+from settings import Settings
 
 # Command line to parse movie file, and extract:
 # - images every 15s
@@ -30,23 +31,6 @@ import digital_area
 #   ]
 # }
 
-# Input file specification as JSON
-# {
-#   "movie_file": "movie.mp4",
-#   "output_dir": "output",
-#   "first_crack_start": "00:05:00",
-#   "first_crack_end": "00:05:30",
-#   "second_crack_start": "00:06:00",
-#   "second_crack_end": "00:06:30",
-#   "target_temp": 242,
-#   "digital_area": {
-#     "left": 450,
-#     "top": 780,
-#     "width": 110,
-#     "height": 60
-#   }
-# }
-
 pytesseract.pytesseract.tesseract_cmd = '/usr/local/Cellar/tesseract/5.3.4/bin/tesseract'
 
 # Parse command line.  output_dir is optional, and defaults to the current directory
@@ -63,73 +47,24 @@ if not args.input_spec:
     print('Error: input_spec is required')
     exit(1)
 
-# Read the input spec
-with open(args.input_spec, 'r') as f:
-    input_spec = json.load(f)
-
-movie_file = input_spec["movie_file"]
-output_dir = input_spec["output_dir"] or "."
-lcd_quad_skew = input_spec["lcd_quad_skew"] or 0
-target_temp = input_spec["target_temp"] or 0
+settings = Settings(args.input_spec)
 start_frame_number = args.start
 end_frame_number = args.end
-
-# all the parameters in the input file specification must exist and be valid
-if not movie_file:
-    print('Error: movie_file is required')
-    exit(1)
-
-if not os.path.exists(movie_file):
-    print(f'Error: movie_file {movie_file} does not exist')
-    exit(1)
-
-if not output_dir:
-    print('Error: output_dir is required')
-    exit(1)
-
-if not os.path.exists(output_dir):
-    print(f'Error: output_dir {output_dir} does not exist')
-    exit(1)
-
-if not input_spec["first_crack_start"]:
-    print('Error: first_crack_start is required')
-    exit(1)
-
-if not input_spec["first_crack_end"]:
-    print('Error: first_crack_end is required')
-    exit(1)
-
-if not input_spec["second_crack_start"]:
-    print('Error: second_crack_start is required')
-    exit(1)
-
-if not input_spec["second_crack_end"]:
-    print('Error: second_crack_end is required')
-    exit(1)
 
 json_output = {
     "images": []
 }
 
 # Open the movie file, using opencv
-cap = cv2.VideoCapture(movie_file)
+cap = cv2.VideoCapture(settings.movie_file)
 frame_rate = cap.get(cv2.CAP_PROP_FPS)
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 duration = frame_count / frame_rate
-output_images_dir = os.path.join(output_dir, 'images')
+output_images_dir = os.path.join(settings.output_dir, 'images')
 
-
-def get_digital_area() -> digital_area.Area:
-    top = input_spec["digital_area"]["top"]
-    left = input_spec["digital_area"]["left"]
-    width = input_spec["digital_area"]["width"]
-    height = input_spec["digital_area"]["height"]
-    return digital_area.Area(left, top, width, height)
-
-
-digital_area = get_digital_area()
+digital_area = settings.digital_area
 
 
 def test_mode():
@@ -141,8 +76,8 @@ def test_mode():
         area = digital_area
         cv2.rectangle(frame, area.top_left, area.bottom_right, (0, 255, 0), 2)
 
-        bottom_left = area.bottom_left_skewed(lcd_quad_skew)
-        bottom_right = area.bottom_right_skewed(lcd_quad_skew)
+        bottom_left = area.bottom_left_skewed(settings.lcd_quad_skew)
+        bottom_right = area.bottom_right_skewed(settings.lcd_quad_skew)
 
         cv2.circle(frame, area.top_left, 5, (0, 0, 255), -1)
         cv2.circle(frame, area.top_right, 5, (0, 0, 255), -1)
@@ -167,8 +102,8 @@ def get_temperature_part_from_full_frame(frame) -> int or None:
     # perspective correct the LCD
     top_left = list(digital_area.top_left)
     top_right = list(digital_area.top_right)
-    bottom_left_skewed = list(digital_area.bottom_left_skewed(lcd_quad_skew))
-    bottom_right_skewed = list(digital_area.bottom_right_skewed(lcd_quad_skew))
+    bottom_left_skewed = list(digital_area.bottom_left_skewed(settings.lcd_quad_skew))
+    bottom_right_skewed = list(digital_area.bottom_right_skewed(settings.lcd_quad_skew))
 
     pts1 = np.float32([top_left, top_right, bottom_left_skewed, bottom_right_skewed])
     pts2 = np.float32(
@@ -256,7 +191,7 @@ def new_image_from_contours(image, thickness: int = 2):
 
 # Output temps as seconds, temperature, as a .csv file
 def write_times_to_own_csv(temperatures):
-    temps_file = os.path.join(output_dir, 'temps.csv')
+    temps_file = os.path.join(settings.output_dir, 'temps.csv')
     with open(temps_file, 'w') as f:
         for time_in_seconds, temp in temperatures.items():
             f.write(f'{time_in_seconds},{temp}\n')
@@ -374,7 +309,7 @@ def extract_images_and_temps_from_video():
                 sensible = is_temp_jmp_sensible(last_temp, temperature)
 
                 # print(f"is {temperature} sensible: {sensible}. In range: {last_temp * 0.5} < {temperature} < {last_temp * 1.5}")
-                if last_temp < temperature < target_temp and sensible:
+                if last_temp < temperature < settings.target_temp and sensible:
                     the_temps[time_in_seconds] = temperature
                     last_temp = temperature
                     print(f"saw temp {temperature} at time {time_in_seconds}")
@@ -390,23 +325,23 @@ def extract_images_and_temps_from_video():
 
 def extract_audio_from_movie():
     # Extract the audio from the movie file, and write this as audio.wav to the output directory
-    audio_file = os.path.join(output_dir, 'audio.wav')
-    subprocess.run(['ffmpeg', '-y', '-i', movie_file, '-vn', audio_file])
+    audio_file = os.path.join(settings.output_dir, 'audio.wav')
+    subprocess.run(['ffmpeg', '-y', '-i', settings.movie_file, '-vn', audio_file])
 
     # Create first_crack and second_crack audio files, based on the input spec
-    first_crack_start = input_spec["first_crack_start"]
-    first_crack_end = input_spec["first_crack_end"]
+    first_crack_start = settings.first_crack_start
+    first_crack_end = settings.first_crack_end
 
     # Use ffmpeg to extract the audio from first_crack_start to first_crack_end
-    first_crack_audio_file = os.path.join(output_dir, 'first_crack.wav')
+    first_crack_audio_file = os.path.join(settings.output_dir, 'first_crack.wav')
     subprocess.run(
         ['ffmpeg', '-y', '-i', audio_file, '-ss', first_crack_start, '-to', first_crack_end, first_crack_audio_file])
 
-    second_crack_start = input_spec["second_crack_start"]
-    second_crack_end = input_spec["second_crack_end"]
+    second_crack_start = settings.second_crack_start
+    second_crack_end = settings.second_crack_end
 
     # Use ffmpeg to extract the audio from second_crack_start to second_crack_end
-    second_crack_audio_file = os.path.join(output_dir, 'second_crack.wav')
+    second_crack_audio_file = os.path.join(settings.output_dir, 'second_crack.wav')
     subprocess.run(
         ['ffmpeg', '-y', '-i', audio_file, '-ss', second_crack_start, '-to', second_crack_end, second_crack_audio_file])
 
@@ -415,15 +350,15 @@ def extract_audio_from_movie():
     # The first sample will be from 1:00 to 1:10
     # The second sample will be from 2:00 to 2:10
     # The third sample will be from 3:00 to 3:10
-    sample1_audio_file = os.path.join(output_dir, 'sample1.wav')
+    sample1_audio_file = os.path.join(settings.output_dir, 'sample1.wav')
     subprocess.run(
         ['ffmpeg', '-y', '-i', audio_file, '-ss', '60', '-to', '70', sample1_audio_file])
 
-    sample2_audio_file = os.path.join(output_dir, 'sample2.wav')
+    sample2_audio_file = os.path.join(settings.output_dir, 'sample2.wav')
     subprocess.run(
         ['ffmpeg', '-y', '-i', audio_file, '-ss', '120', '-to', '130', sample2_audio_file])
 
-    sample3_audio_file = os.path.join(output_dir, 'sample3.wav')
+    sample3_audio_file = os.path.join(settings.output_dir, 'sample3.wav')
     subprocess.run(
         ['ffmpeg', '-y', '-i', audio_file, '-ss', '180', '-to', '190', sample3_audio_file])
 
@@ -436,6 +371,6 @@ json_output['chamber_temps'] = temps
 write_times_to_own_csv(temperatures=temps)
 
 # Write this to metadata.json, within the output directory
-metadata_file = os.path.join(output_dir, 'metadata.json')
+metadata_file = os.path.join(settings.output_dir, 'metadata.json')
 with open(metadata_file, 'w') as f:
     json.dump(json_output, f, indent=2)

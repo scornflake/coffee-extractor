@@ -10,6 +10,18 @@ class Area:
         self.width = width
         self.height = height
 
+    @staticmethod
+    def from_json(json):
+        return Area(json["left"], json["top"], json["width"], json["height"])
+
+    def to_json(self):
+        return {
+            "left": self.left,
+            "top": self.top,
+            "width": self.width,
+            "height": self.height,
+        }
+
     @property
     def right(self) -> int:
         return self.left + self.width
