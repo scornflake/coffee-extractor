@@ -1,10 +1,13 @@
 import tkinter
 
+from settings import Settings
+
 
 # Basic UI that has a set of controls on the left (west), and a canvas taking up the rest of the right hand (east) side.
 class Editor:
-    def __init__(self, master):
+    def __init__(self, master, the_settings: Settings):
         self.master = master
+        self.settings = the_settings
         self.master.title("Editor")
 
         self.master.grid_rowconfigure(0, weight=1)
@@ -13,11 +16,19 @@ class Editor:
         self.controls = tkinter.Frame(self.master)
         self.controls.grid(row=0, column=0, sticky="nsew")
         self.editing_controls(self.controls)
-        # Padding around self.controls
-
 
         self.canvas = tkinter.Canvas(self.master, bg="red")
         self.canvas.grid(row=0, column=1, sticky="nsew")
+        self.canvas_view(self.canvas)
+
+    # A canvas, that'll hold a picture of what we're doing
+    def canvas_view(self, master):
+        canvas = tkinter.Canvas(master)
+        canvas.grid(row=0, column=1, sticky="nsew")
+
+        return canvas
+
+    # Generate a frame from the movie and the digital area
 
     # Basic controls to adjust the canvas. left/top/width/height boxes.
     def editing_controls(self, master):
@@ -50,12 +61,21 @@ class Editor:
         height_entry = tkinter.Entry(frame)
         height_entry.grid(row=3, column=1, sticky="w")
 
+        # Fill in UI with values from settings
+        left_entry.insert(0, self.settings.digital_area.left)
+        top_entry.insert(0, self.settings.digital_area.top)
+        width_entry.insert(0, self.settings.digital_area.width)
+        height_entry.insert(0, self.settings.digital_area.height)
+
         # Return the frame
         return frame
 
+import args
 
+# Load the settings from the input_spec.json file
+settings = Settings(args.args.input_spec)
 
 # Make it go!
 root = tkinter.Tk()
-Editor(root)
+Editor(root, settings)
 root.mainloop()

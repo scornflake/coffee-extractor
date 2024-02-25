@@ -39,6 +39,11 @@ class Settings:
 
         self.validate()
 
+    def write_to_file(self):
+        # Write the input spec to a file
+        with open(os.path.join(self.output_dir, 'input_spec.json'), 'w') as f:
+            json.dump(self.input_spec, f, indent=2)
+
     def validate(self):
         # all the parameters in the input file specification must exist and be valid
         if not self.movie_file:

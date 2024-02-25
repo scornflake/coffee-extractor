@@ -9,7 +9,9 @@ import subprocess
 import numpy as np
 import pytesseract
 import digital_area
+from movie import Movie
 from settings import Settings
+from args import args
 
 # Command line to parse movie file, and extract:
 # - images every 15s
@@ -33,20 +35,6 @@ from settings import Settings
 
 pytesseract.pytesseract.tesseract_cmd = '/usr/local/Cellar/tesseract/5.3.4/bin/tesseract'
 
-# Parse command line.  output_dir is optional, and defaults to the current directory
-parser = argparse.ArgumentParser(
-    description='Extract images and audio from a roast, and produce something useful for AI training')
-parser.add_argument('input_spec', type=str, help='The input specification')
-parser.add_argument('-s', "--start", type=int, help='The starting frame number', required=False)
-parser.add_argument('-e', "--end", type=int, help='The ending frame number', required=False)
-parser.add_argument("-t", "--test", help="Run in test mode", default=False, action="store_true")
-args = parser.parse_args()
-
-# Check that required args are given
-if not args.input_spec:
-    print('Error: input_spec is required')
-    exit(1)
-
 settings = Settings(args.input_spec)
 start_frame_number = args.start
 end_frame_number = args.end
@@ -55,13 +43,7 @@ json_output = {
     "images": []
 }
 
-# Open the movie file, using opencv
-cap = cv2.VideoCapture(settings.movie_file)
-frame_rate = cap.get(cv2.CAP_PROP_FPS)
-frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-duration = frame_count / frame_rate
+movie = Movie(settings.movie_file)
 output_images_dir = os.path.join(settings.output_dir, 'images')
 
 digital_area = settings.digital_area
@@ -70,9 +52,8 @@ digital_area = settings.digital_area
 def test_mode():
     # Get an image, at say, the 1m mark.
     # Draw a rectangle around it based on input spec crop area, and output it to disk for the user to preview
-    cap.set(cv2.CAP_PROP_POS_MSEC, 60000)
-    ret, frame = cap.read()
-    if ret:
+    frame = movie.get_frame_number(4000)
+    if frame:
         area = digital_area
         cv2.rectangle(frame, area.top_left, area.bottom_right, (0, 255, 0), 2)
 
@@ -127,7 +108,7 @@ def extract_digits_from_readout(image, sensitivity=0):
 
 
 def write_image(image, frame_number, identifier):
-    hms_safe = time.strftime('%H_%M_%S', time.gmtime(frame_number / frame_rate))
+    hms_safe = movie.hhmmss(frame_number=frame_number)
     unique_name = os.path.join(output_images_dir, f'image_{hms_safe}_{identifier}.png')
     cv2.imwrite(unique_name, image)
 
@@ -268,7 +249,7 @@ def is_temp_jmp_sensible(last_value, next_value) -> bool:
 # Extract images. One every 15s, using OpenCV
 def extract_images_and_temps_from_video():
     print(
-        f'Frame rate: {frame_rate}, width: {frame_width}, height: {frame_height}, frame count: {frame_count}, duration: {duration}')
+        f'Frame rate: {movie.frame_rate}, width: {movie.frame_width}, height: {movie.frame_height}, frame count: {movie.frame_count}, duration: {movie.duration}')
 
     # Extract video frames every 15s, writing each to the output directory/images
 
@@ -288,16 +269,16 @@ def extract_images_and_temps_from_video():
     iteration = 0
     last_temp = 25
     if start_frame_number and end_frame_number:
-        frame_range = range(start_frame_number, end_frame_number, int(frame_rate * 15))
+        frame_range = range(start_frame_number, end_frame_number, int(movie.frame_rate * 15))
     else:
-        frame_range = range(0, frame_count, int(frame_rate * 15))
+        frame_range = range(0, movie.frame_count, int(movie.frame_rate * 15))
     for frame_number in frame_range:
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-        time_in_seconds = frame_number / frame_rate
-        ret, frame = cap.read()
+        movie.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+        time_in_seconds = frame_number / movie.frame_rate
+        ret, frame = movie.cap.read()
         if ret:
-            hms_safe = time.strftime('%H_%M_%S', time.gmtime(frame_number / frame_rate))
-            hms = time.strftime('%H:%M:%S', time.gmtime(frame_number / frame_rate))
+            hms_safe = movie.hhmmss(frame_number, filename_safe=True)
+            hms = movie.hhmmss(frame_number)
             image_file = os.path.join(output_images_dir, f'image_{hms_safe}.png')
             cv2.imwrite(image_file, frame)
             the_images.append({'hms': hms, 'filename': image_file, 'time': f'{time_in_seconds:.3f}'})
