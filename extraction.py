@@ -29,8 +29,6 @@ def extract_digits_from_readout(image, the_settings: Settings):
     img_hsv = cv2.cvtColor(inverted, cv2.COLOR_BGR2HSV)
 
     # Filter the image so that we're left with only cyan/green
-    # lower = np.array([70, 200 - sensitivity, 100])
-    # upper = np.array([100, 255, 255])
     lower = np.array([the_settings.low_threshold.h, the_settings.low_threshold.s, the_settings.low_threshold.v])
     upper = np.array([the_settings.upper_threshold.h, the_settings.upper_threshold.s, the_settings.upper_threshold.v])
     mask = cv2.inRange(img_hsv, lower, upper)

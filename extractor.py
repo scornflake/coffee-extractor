@@ -66,6 +66,8 @@ def write_image(image, frame_number, identifier):
 
 
 # Output temps as seconds, temperature, as a .csv file
+# This is going to need work.
+# TODO: needs start at zero, and intervals must be consistent
 def write_times_to_own_csv(temperatures):
     temps_file = settings.output_filename('temps', extension='csv')
     with open(temps_file, 'w') as f:
