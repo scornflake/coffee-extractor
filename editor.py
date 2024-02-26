@@ -262,6 +262,8 @@ class Editor:
         upper_s_label.grid(row=6, column=0, sticky="e")
         upper_v_label = tkinter.Label(frame, text="Upper V")
         upper_v_label.grid(row=7, column=0, sticky="e")
+        lcd_blur_label = tkinter.Label(frame, text="Blur")
+        lcd_blur_label.grid(row=8, column=1, sticky="e")
 
         # The text boxes
         low_h_entry = tkinter.Entry(frame)
@@ -276,6 +278,8 @@ class Editor:
         upper_s_entry.grid(row=6, column=1, sticky="w")
         upper_v_entry = tkinter.Entry(frame)
         upper_v_entry.grid(row=7, column=1, sticky="w")
+        lcd_blur_entry = tkinter.Entry(frame)
+        lcd_blur_entry.grid(row=8, column=1, sticky="w")
 
         # Populate with the values from the settings
         low_h_entry.insert(0, self.settings.low_threshold.h)
@@ -284,6 +288,7 @@ class Editor:
         upper_h_entry.insert(0, self.settings.upper_threshold.h)
         upper_s_entry.insert(0, self.settings.upper_threshold.s)
         upper_v_entry.insert(0, self.settings.upper_threshold.v)
+        lcd_blur_entry.insert(0, self.settings.lcd_blur_amount)
 
         # bind to the keyreleased, and update settings.
         def update_low_h(event):
@@ -328,12 +333,20 @@ class Editor:
 
             self.get_int_from_entry(event, update_upper_v_v)
 
+        def update_lcd_blur(event):
+            def update_lcd_blur_v(value):
+                self.settings.lcd_blur_amount = value
+                self.update_lcd_preview()
+
+            self.get_int_from_entry(event, update_lcd_blur_v)
+
         low_h_entry.bind("<KeyRelease>", update_low_h)
         low_s_entry.bind("<KeyRelease>", update_low_s)
         low_v_entry.bind("<KeyRelease>", update_low_v)
         upper_h_entry.bind("<KeyRelease>", update_upper_h)
         upper_s_entry.bind("<KeyRelease>", update_upper_s)
         upper_v_entry.bind("<KeyRelease>", update_upper_v)
+        lcd_blur_entry.bind("<KeyRelease>", update_lcd_blur)
 
     def update_lcd_preview(self):
         if not self.lcd_preview_canvas:
@@ -360,9 +373,21 @@ class Editor:
 # Load the settings from the input_spec.json file
 settings = Settings(args.args.input_spec)
 
+
+def save_and_quit():
+    editor.save_settings()
+    root.quit()
+
+
 # Make it go!
 root = tkinter.Tk()
 editor = Editor(root, settings)
-root.mainloop()
+root.winfo_toplevel().title(f"Editing for {settings.movie_file}, {settings.identifier}")
 
-editor.save_settings()
+menubar = tkinter.Menu(root)
+mac_app_menu = tkinter.Menu(menubar, name="apple")
+menubar.add_cascade(menu=mac_app_menu)
+root.createcommand("tk::mac::Quit", save_and_quit)
+root.protocol("WM_DELETE_WINDOW", save_and_quit)
+
+root.mainloop()

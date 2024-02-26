@@ -37,26 +37,37 @@ pytesseract.pytesseract.tesseract_cmd = '/usr/local/Cellar/tesseract/5.3.4/bin/t
 settings = Settings(args.input_spec)
 start_frame_number = args.start
 end_frame_number = args.end
+save_images_to_teseract = args.teseract
+
+extract_audio = args.audio
+extract_video = args.video
 
 json_output = {
     "images": []
 }
 
 movie = Movie(settings.movie_file)
-output_images_dir = os.path.join(settings.output_dir, 'images')
-# Make sure this dir exists
-os.makedirs(output_images_dir, exist_ok=True)
+
+
+def clear_files_from(folder):
+    for the_file in os.listdir(folder):
+        file_path = os.path.join(folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(e)
 
 
 def write_image(image, frame_number, identifier):
     hms_safe = movie.hhmmss(frame_number=frame_number)
-    unique_name = os.path.join(output_images_dir, f'image_{hms_safe}_{identifier}.png')
+    unique_name = settings.output_filename(f'images', f'{hms_safe}_{identifier}', 'png')
     cv2.imwrite(unique_name, image)
 
 
 # Output temps as seconds, temperature, as a .csv file
 def write_times_to_own_csv(temperatures):
-    temps_file = os.path.join(settings.output_dir, 'temps.csv')
+    temps_file = settings.output_filename('temps', extension='csv')
     with open(temps_file, 'w') as f:
         for time_in_seconds, temp in temperatures.items():
             f.write(f'{time_in_seconds},{temp}\n')
@@ -101,16 +112,8 @@ def extract_images_and_temps_from_video():
     # Extract video frames every 15s, writing each to the output directory/images
 
     # Remove images from output_images_dir
-    for the_file in os.listdir(output_images_dir):
-        file_path = os.path.join(output_images_dir, the_file)
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-        except Exception as e:
-            print(e)
+    settings.clear_files_for('images')
 
-    # Extract the images from the movie file
-    os.makedirs(output_images_dir, exist_ok=True)
     the_images = []
     the_temps = {}
     iteration = 0
@@ -125,13 +128,14 @@ def extract_images_and_temps_from_video():
         if frame is not None:
             hms_safe = movie.hhmmss(frame_number, filename_safe=True)
             hms = movie.hhmmss(frame_number)
-            image_file = os.path.join(output_images_dir, f'image_{hms_safe}.png')
+            image_file = settings.output_filename(f'images', f'{hms_safe}', 'png')
             cv2.imwrite(image_file, frame)
             the_images.append({'hms': hms, 'filename': image_file, 'time': f'{time_in_seconds:.3f}'})
             print(f'Wrote frame {frame_number} to {image_file}')
 
             def per_frame_handler(lcd_part, frame_number):
-                write_image(lcd_part, frame_number, 'teseract')
+                if save_images_to_teseract:
+                    write_image(lcd_part, frame_number, 'teseract')
 
             temperature = find_temperature_of_frame(frame_number, frame, settings, per_frame_handler)
 
@@ -154,9 +158,16 @@ def extract_images_and_temps_from_video():
     return the_images, the_temps
 
 
+# Audio, we want about 5 minutes of first_crack, second_crack
+# First crack looks to be about 20-24s long. 4 recordings to get a minute, so about 20 total
+# It's fine to have other stuff happening (voice, cars, etc) during first crack
+#
+# Then we want an equal number of recordings for background. Where first crack isn't happening.
+
+
 def extract_audio_from_movie():
     # Extract the audio from the movie file, and write this as audio.wav to the output directory
-    audio_file = os.path.join(settings.output_dir, 'audio.wav')
+    audio_file = "audio.wav"
     subprocess.run(['ffmpeg', '-y', '-i', settings.movie_file, '-vn', audio_file])
 
     # Create first_crack and second_crack audio files, based on the input spec
@@ -164,7 +175,7 @@ def extract_audio_from_movie():
     first_crack_end = settings.first_crack_end
 
     # Use ffmpeg to extract the audio from first_crack_start to first_crack_end
-    first_crack_audio_file = os.path.join(settings.output_dir, 'first_crack.wav')
+    first_crack_audio_file = settings.output_filename('first_crack', extension='wav')
     subprocess.run(
         ['ffmpeg', '-y', '-i', audio_file, '-ss', first_crack_start, '-to', first_crack_end, first_crack_audio_file])
 
@@ -172,36 +183,29 @@ def extract_audio_from_movie():
     second_crack_end = settings.second_crack_end
 
     # Use ffmpeg to extract the audio from second_crack_start to second_crack_end
-    second_crack_audio_file = os.path.join(settings.output_dir, 'second_crack.wav')
+    second_crack_audio_file = settings.output_filename('second_crack', extension='wav')
     subprocess.run(
         ['ffmpeg', '-y', '-i', audio_file, '-ss', second_crack_start, '-to', second_crack_end, second_crack_audio_file])
 
-    # Create 3 samples of audio that are 10s long each, that do not overlap with the first or second crack times
-    # These will be used to train the AI
-    # The first sample will be from 1:00 to 1:10
-    # The second sample will be from 2:00 to 2:10
-    # The third sample will be from 3:00 to 3:10
-    sample1_audio_file = os.path.join(settings.output_dir, 'sample1.wav')
+    # Create a sample of audio, which we'll presume to be background noise
+    background_noise = settings.output_filename('background_noise', extension='wav')
     subprocess.run(
-        ['ffmpeg', '-y', '-i', audio_file, '-ss', '60', '-to', '70', sample1_audio_file])
+        ['ffmpeg', '-y', '-i', audio_file, '-ss', '60', '-to', '80', background_noise])
 
-    sample2_audio_file = os.path.join(settings.output_dir, 'sample2.wav')
-    subprocess.run(
-        ['ffmpeg', '-y', '-i', audio_file, '-ss', '120', '-to', '130', sample2_audio_file])
-
-    sample3_audio_file = os.path.join(settings.output_dir, 'sample3.wav')
-    subprocess.run(
-        ['ffmpeg', '-y', '-i', audio_file, '-ss', '180', '-to', '190', sample3_audio_file])
+    # Clean up, remove the old audio file
+    os.remove(audio_file)
 
 
-images, temps = extract_images_and_temps_from_video()
-json_output['images'] = images
-json_output['chamber_temps'] = temps
+if extract_video:
+    images, temps = extract_images_and_temps_from_video()
+    json_output['images'] = images
+    json_output['chamber_temps'] = temps
+    write_times_to_own_csv(temperatures=temps)
 
-extract_audio_from_movie()
-write_times_to_own_csv(temperatures=temps)
+if extract_audio:
+    extract_audio_from_movie()
 
 # Write this to metadata.json, within the output directory
-metadata_file = os.path.join(settings.output_dir, 'metadata.json')
+metadata_file = settings.output_filename('metadata', 'json')
 with open(metadata_file, 'w') as f:
     json.dump(json_output, f, indent=2)

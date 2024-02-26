@@ -110,7 +110,8 @@ def extract_lcd_and_ready_for_teseract(frame, the_settings: Settings):
     # Extract the digital area from the frame, and find the temperature
     extracted_frame = get_temperature_part_from_full_frame(frame, the_settings=the_settings)
     extracted_frame = extract_digits_from_readout(extracted_frame, the_settings=the_settings)
-    kernel = np.ones((3, 3), np.float32) / 5
+    blur = the_settings.lcd_blur_amount
+    kernel = np.ones((blur, blur), np.float32) / 5
     extracted_frame = cv2.filter2D(extracted_frame, -1, kernel)
     extracted_frame = dilate_with_kernel(extracted_frame, kernel_size=2)
     return extracted_frame

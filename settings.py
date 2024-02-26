@@ -48,6 +48,7 @@ class Settings:
 
         self.spec_filename = spec_filename
 
+        self.identifier = self.input_spec["identifier"]
         self.movie_file = self.input_spec["movie_file"]
         self.output_dir = self.input_spec["output_dir"] or "."
         self.lcd_quad_skew = self.input_spec["lcd_quad_skew"] or 0
@@ -59,14 +60,15 @@ class Settings:
         self.second_crack_end = self.input_spec["second_crack_end"]
         self.target_temp = self.input_spec["target_temp"]
 
-        self.blur_amount = 20
         self.low_threshold = HSV.from_json(self.input_spec["lcd_low_threshold"])
         self.upper_threshold = HSV.from_json(self.input_spec["lcd_upper_threshold"])
+        self.lcd_blur_amount = self.input_spec["lcd_blur_amount"] or 3
 
         self.validate()
 
     def save_values_to_input_spec(self):
         # Save the values to the input spec
+        self.input_spec["identifier"] = self.identifier
         self.input_spec["movie_file"] = self.movie_file
         self.input_spec["output_dir"] = self.output_dir
         self.input_spec["lcd_quad_skew"] = self.lcd_quad_skew
@@ -80,6 +82,7 @@ class Settings:
 
         self.input_spec["lcd_low_threshold"] = self.low_threshold.to_json()
         self.input_spec["lcd_upper_threshold"] = self.upper_threshold.to_json()
+        self.input_spec["lcd_blur_amount"] = self.lcd_blur_amount
 
     def write_to_file(self):
         # Write the input spec to a file
@@ -91,6 +94,10 @@ class Settings:
         # all the parameters in the input file specification must exist and be valid
         if not self.movie_file:
             print('Error: movie_file is required')
+            exit(1)
+
+        if not self.identifier:
+            print('Error: identifier is required')
             exit(1)
 
         if not os.path.exists(self.movie_file):
@@ -121,10 +128,39 @@ class Settings:
             print('Error: second_crack_end is required')
             exit(1)
 
+    def output_filename(self, label, filename: str = None, extension: str = None):
+        if filename is not None:
+            actual_filename = f'{label}_{self.identifier}_{filename}.{extension}'
+        else:
+            actual_filename = f'{label}_{self.identifier}.{extension}'
+        full_path = os.path.join(self.output_dir, label, actual_filename)
+        # check folder exists
+        folder = os.path.dirname(full_path)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        return full_path
+
+    def clear_files_for(self, label):
+        folder = os.path.join(self.output_dir, label)
+        # Ensure folder exists
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        for the_file in os.listdir(folder):
+            file_path = os.path.join(folder, the_file)
+            if file_path.__contains__(self.identifier):
+                try:
+                    if os.path.isfile(file_path):
+                        os.unlink(file_path)
+                except Exception as e:
+                    print(e)
+
     def ensure_input_spec_has_all_fields(self):
         # Ensure that all fields are present in the input spec
         if "lcd_quad_skew" not in self.input_spec:
             self.input_spec["lcd_quad_skew"] = -16
+
+        if "lcd_blur_amount" not in self.input_spec:
+            self.input_spec["lcd_blur_amount"] = 3
 
         if "target_temp" not in self.input_spec:
             self.input_spec["target_temp"] = 242
@@ -153,4 +189,3 @@ class Settings:
 
         if "second_crack_end" not in self.input_spec:
             self.input_spec["second_crack_end"] = "00:06:30"
-
