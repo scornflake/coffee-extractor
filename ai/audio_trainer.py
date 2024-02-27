@@ -23,25 +23,29 @@ class ReduceMeanLayer(tf.keras.layers.Layer):
 
 # Goal: transfer train a model on recognition of background noise, first_crack, second_crack
 class Trainer:
+    @classmethod
+    def audio_mapping(cls):
+        return {'background_noise': 0, 'first_crack': 1, 'second_crack': 2}
+
+    @classmethod
+    def audio_target_for_label(cls, label: str) -> int:
+        # if the key does not exist in self.audio_mapping, raise an error
+        if label not in cls.audio_labels():
+            raise ValueError(f"Label {label} is not in the audio mapping")
+
+        return cls.audio_mapping()[label]
+
+    @classmethod
+    def audio_labels(cls):
+        return list(cls.audio_mapping().keys())
+
     def __init__(self, data_folder):
         self.data_folder = data_folder
-        self.audio_mapping = {'background_noise': 0, 'first_crack': 1, 'second_crack': 2}
         self.model = None
         self.yamnet_model_handle = 'https://tfhub.dev/google/yamnet/1'
         self.yamnet_model = hub.load(self.yamnet_model_handle)
         class_map_path = self.yamnet_model.class_map_path().numpy().decode('utf-8')
         self.class_names = list(pd.read_csv(class_map_path)['display_name'])
-
-    def audio_target_for_label(self, label: str) -> int:
-        # if the key does not exist in self.audio_mapping, raise an error
-        if label not in self.audio_mapping.keys():
-            raise ValueError(f"Label {label} is not in the audio mapping")
-
-        return self.audio_mapping[label]
-
-    @property
-    def audio_labels(self):
-        return list(self.audio_mapping.keys())
 
     def train_audio_from_data_folder(self):
         # Get the filenames, labels
@@ -70,7 +74,7 @@ class Trainer:
         # We want to get a list of tuples, (filename, label)
         filenames = []
         target_indexes = []
-        for label in self.audio_labels:
+        for label in self.audio_labels():
             path_for_labelled_data = os.path.join(self.data_folder, label)
             target_index = self.audio_target_for_label(label)
             print(f"Use: {label}, target: {target_index}")
@@ -126,7 +130,7 @@ class Trainer:
             tf.keras.layers.Input(shape=(1024), dtype=tf.float32, name='input_embedding'),
             # A rectified linear unit (ReLU) is an activation function that introduces the property of nonlinearity to a deep learning model and solves the vanishing gradients issue
             tf.keras.layers.Dense(512, activation='relu', name='hidden_layer'),
-            tf.keras.layers.Dense(len(self.audio_labels), name='output')
+            tf.keras.layers.Dense(len(self.audio_labels()), name='output')
         ], name='audio_model')
 
         self.model.summary()
@@ -149,6 +153,12 @@ class Trainer:
         print("Loss: ", loss)
         print("Accuracy: ", accuracy)
 
+    def test_against_wav_file(self, wav_file_name):
+        wav = self.load_wav_16k_mono(wav_file_name)
+        embeddings = self._extract_embedding(wav, 0)
+        result = self.model(embeddings)
+        print(f"Result for file: {wav_file_name}\nResult: {result}")
+
     def save_model(self):
         """Gives a model that can take audio directly, and classify it.  Saves it to a file."""
         # Check we have a model, if not throw
@@ -165,7 +175,7 @@ class Trainer:
         serving_outputs = self.model(embeddings_output)
         serving_outputs = ReduceMeanLayer(axis=0, name='classifier')(serving_outputs)
         serving_model = tf.keras.Model(input_segment, serving_outputs)
-        serving_model.save(model_filename, include_optimizer=False)
+        serving_model.save(model_filename)
 
     def from_wave_to_embeddings(self, dataset):
         def conversion_func(wave, label):
