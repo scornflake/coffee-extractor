@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+import seaborn as sns
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_io as tfio
@@ -139,19 +140,41 @@ class Trainer:
                            optimizer="adam",
                            metrics=['accuracy'])
         callback = tf.keras.callbacks.EarlyStopping(monitor='loss',
-                                                    patience=3,
+                                                    patience=5,
                                                     restore_best_weights=True)
 
         history = self.model.fit(training_data,
-                                 epochs=20,
+                                 epochs=35,
                                  validation_data=val_ds,
                                  callbacks=callback)
+
+        # Plot the learning curve
+        import matplotlib.pyplot as plt
+        plt.plot(history.history['loss'], label='loss')
+        plt.plot(history.history['val_loss'], label='val_loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.ylim([0, 1])
+        plt.legend()
+        plt.show()
 
         print("Training complete. Testing on test_data set...")
         loss, accuracy = self.model.evaluate(test_data)
 
         print("Loss: ", loss)
         print("Accuracy: ", accuracy)
+
+        # Make some predictions
+        predict = self.model.predict(test_data)
+        y_pred = tf.argmax(predict, axis=1)
+        y_true = list(test_data.unbatch().map(lambda x, y: y).as_numpy_iterator())
+        # Create a confusion matrix
+        confusion_matrix = tf.math.confusion_matrix(y_true, y_pred)
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(confusion_matrix, annot=True, fmt='g', cmap='Blues', xticklabels=self.audio_labels(), yticklabels=self.audio_labels())
+        plt.xlabel('Prediction')
+        plt.ylabel('True')
+        plt.show()
 
     def test_against_wav_file(self, wav_file_name):
         wav = self.load_wav_16k_mono(wav_file_name)

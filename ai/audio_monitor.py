@@ -72,6 +72,7 @@ class AudioModel:
         return class_probabilities
 
     async def classify_raw_audio_from_device(self, **kwargs):
+        rate = tf.cast(self.sample_rate, tf.int64)
         temporary_q = np.array([], dtype=np.float32)
         async for indata, status in inputstream_generator(input_device=self.input_device, **kwargs):
             if status:
@@ -84,11 +85,11 @@ class AudioModel:
                     # the audio should be float32
                     audio_data = tf.convert_to_tensor(temporary_q)
                     temporary_q = np.array([], dtype=np.float32)
-                    rate = tf.cast(self.sample_rate, tf.int64)
                     wav = tfio.audio.resample(audio_data, rate_in=rate, rate_out=16000)
 
                     # audio_data = tf.io.decode_raw(indata, out_type=tf.float32)
                     result = self.classify_audio_via_model(wav)
+
                     # The result is a tensor, that is the probability that this audio is a certain class
                     inferred_class, top_score = self.get_most_likely(result)
                     print(f"Primary sound is: {inferred_class} with a probability of {top_score}. Results: {result}")
