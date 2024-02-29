@@ -6,8 +6,12 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_io as tfio
 
+# disables warnings like: Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 # neils_data_folder = "/Users/neil/development/ai/data series"
-johns_data_folder = r"C:\Users\johnc\Drive - Personal\Projects\Coffee AI\data series"
+johns_data_folder = r"/home/john/copy-of-google/data series"
 neils_data_folder = johns_data_folder
 
 @tf.keras.saving.register_keras_serializable()
@@ -62,15 +66,10 @@ class Trainer:
 
         # Convert to wave data
         dumpdataset(dataset, "initial", ["file", "label"])
-
-        # Runs a mapping function - takes every filename, grabs the file load into mem into 16khz and mono 1
-        # channel normalized.  All the audio samples are -1 to 1.0 (float32).
         dataset = dataset.map(from_tuple_to_wav_label)
-
-        # try this out - this will tell you the format of the tensor.
         # dumpdataset(dataset, "waves", ["wave", "label_index"])
 
-        # Convert to embeddings, to train ymset you give it "features".
+        # Convert to embeddings
         all_data = self.from_wave_to_embeddings(dataset)
 
         # Now train
@@ -108,6 +107,8 @@ class Trainer:
         return wav
 
     def perform_training(self, dataset_with_audio_embeddings):
+        dumpdataset(dataset_with_audio_embeddings, "With Embeddings", ["embeddings", "target"])
+
         dataset_size = len(list(dataset_with_audio_embeddings))
 
         # We need a tf dataset, of form: (extraction, label)
