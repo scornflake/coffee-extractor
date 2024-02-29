@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import pandas as pd
@@ -7,6 +8,7 @@ import tensorflow_hub as hub
 import tensorflow_io as tfio
 
 neils_data_folder = "/Users/neil/development/ai/data series"
+
 
 @tf.keras.saving.register_keras_serializable()
 class ReduceMeanLayer(tf.keras.layers.Layer):
@@ -39,9 +41,10 @@ class Trainer:
     def audio_labels(cls):
         return list(cls.audio_mapping().keys())
 
-    def __init__(self, data_folder):
+    def __init__(self, data_folder, epochs:int = 35):
         self.data_folder = data_folder
         self.model = None
+        self.epochs = epochs
         self.yamnet_model_handle = 'https://tfhub.dev/google/yamnet/1'
         self.yamnet_model = hub.load(self.yamnet_model_handle)
         class_map_path = self.yamnet_model.class_map_path().numpy().decode('utf-8')
@@ -101,6 +104,7 @@ class Trainer:
         return wav
 
     def perform_training(self, dataset_with_audio_embeddings):
+        # dumpdataset(dataset_with_audio_embeddings, "With Embeddings", ["embeddings", "target"])
         dataset_size = len(list(dataset_with_audio_embeddings))
 
         # We need a tf dataset, of form: (extraction, label)
@@ -143,7 +147,7 @@ class Trainer:
                                                     restore_best_weights=True)
 
         history = self.model.fit(training_data,
-                                 epochs=35,
+                                 epochs=self.epochs,
                                  validation_data=val_ds,
                                  callbacks=callback)
 
@@ -228,8 +232,17 @@ def dumpdataset(ds, label: str, labels: [str]):
             print(f"{labels[0]}: {x}, {labels[1]}: {y}")
 
 
+def process_args():
+    parser = argparse.ArgumentParser(
+        description='Run training')
+    parser.add_argument('--epochs', type=int, help='Number of epochs to train for', default=40, required=False)
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == "__main__":
-    trainer = Trainer(neils_data_folder)
+    args = process_args()
+    trainer = Trainer(neils_data_folder, epochs=args.epochs)
     trainer.train_audio_from_data_folder()
     trainer.save_model()
 
