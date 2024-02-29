@@ -61,10 +61,15 @@ class Trainer:
 
         # Convert to wave data
         dumpdataset(dataset, "initial", ["file", "label"])
+
+        # Runs a mapping function - takes every filename, grabs the file load into mem into 16khz and mono 1
+        # channel normalized.  All the audio samples are -1 to 1.0 (float32).
         dataset = dataset.map(from_tuple_to_wav_label)
+
+        # try this out - this will tell you the format of the tensor.
         # dumpdataset(dataset, "waves", ["wave", "label_index"])
 
-        # Convert to embeddings
+        # Convert to embeddings, to train ymset you give it "features".
         all_data = self.from_wave_to_embeddings(dataset)
 
         # Now train
