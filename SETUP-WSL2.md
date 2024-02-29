@@ -22,6 +22,29 @@ You are ready to go when this command works:
 pip install pyaudio
 ```
 
+# CUDA on WSL2
+
+Get CUDA drivers for WSL2 on Windows. 
+
+Ref: https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html#wsl
+
+```bash
+wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+sudo apt-get -y install cuda-toolkit-12-3
+```
+
+The throw this into your .bashrc file:
+
+```bash
+export PATH=/usr/local/cuda/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+```
+    
+
+# Python Requirements 
+
 Now you can pip install the requirements-wsl2.txt file - the main difference here is that
 tensorflow gets installed with the CUDA support for WSL2, and I've added a few other modules (pytesseract).  
  
