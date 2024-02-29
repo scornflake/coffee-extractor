@@ -4,7 +4,7 @@ import cv2
 import os
 import time
 import json
-import subprocess
+import subprocess, platform
 
 import pytesseract
 from extraction import find_temperature_of_frame
@@ -32,7 +32,11 @@ from args import args
 #   ]
 # }
 
-pytesseract.pytesseract.tesseract_cmd = '/usr/local/Cellar/tesseract/5.3.4/bin/tesseract'
+def is_mac():
+    return platform.system() == 'Darwin'
+
+if is_mac():
+    pytesseract.pytesseract.tesseract_cmd = '/usr/local/Cellar/tesseract/5.3.4/bin/tesseract'
 
 settings = Settings(args.input_spec)
 start_frame_number = args.start

@@ -6,7 +6,13 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_io as tfio
 
-neils_data_folder = "/Users/neil/development/ai/data series"
+# disables warnings like: Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+# neils_data_folder = "/Users/neil/development/ai/data series"
+johns_data_folder = r"/home/john/copy-of-google/data series"
+neils_data_folder = johns_data_folder
 
 @tf.keras.saving.register_keras_serializable()
 class ReduceMeanLayer(tf.keras.layers.Layer):
@@ -101,6 +107,8 @@ class Trainer:
         return wav
 
     def perform_training(self, dataset_with_audio_embeddings):
+        dumpdataset(dataset_with_audio_embeddings, "With Embeddings", ["embeddings", "target"])
+
         dataset_size = len(list(dataset_with_audio_embeddings))
 
         # We need a tf dataset, of form: (extraction, label)
