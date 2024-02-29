@@ -8,7 +8,6 @@ import tensorflow_io as tfio
 
 neils_data_folder = "/Users/neil/development/ai/data series"
 
-
 @tf.keras.saving.register_keras_serializable()
 class ReduceMeanLayer(tf.keras.layers.Layer):
     def __init__(self, axis=0, **kwargs):
