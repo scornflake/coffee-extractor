@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import os
 import sys
@@ -8,7 +9,7 @@ import tensorflow_hub as hub
 import sounddevice as sd
 import tensorflow_io as tfio
 
-from ai.audio_trainer import ReduceMeanLayer, neils_data_folder, Trainer
+from ai.audio_trainer import ReduceMeanLayer, Trainer
 
 
 async def inputstream_generator(input_device: int | str, channels=1, **kwargs):
@@ -95,7 +96,7 @@ class AudioModel:
                     print(f"Primary sound is: {inferred_class} with a probability of {top_score}. Results: {result}")
 
                 # else:
-                    # print(f"Temporary q is {len(temporary_q)} long")
+                # print(f"Temporary q is {len(temporary_q)} long")
 
     def get_most_likely(self, result) -> (str, float):
         top_class = tf.argmax(result)
@@ -125,13 +126,27 @@ class AudioModel:
         print(f"Primary sound is: {inferred_class} with a probability of {top_score}")
 
 
-if __name__ == "__main__":
-    monitor = AudioModel("audio_model.keras")
-    data_folder = neils_data_folder
+def process_args():
+    parser = argparse.ArgumentParser(description='Run training')
+    parser.add_argument('data', type=str, help='Data series folder, where the training data is')
+    args = parser.parse_args()
 
-    # background_noise_file = os.path.join(data_folder, "background_noise", "background_noise_roast_1.wav")
-    # first_crack_file = os.path.join(data_folder, "first_crack", "first_crack_roast_1.wav")
-    # monitor.classify(background_noise_file)
-    # monitor.classify(first_crack_file)
+    # Check data series folder exists on disk
+    if not os.path.exists(args.data):
+        print(f"Data series folder {args.data} does not exist")
+        exit(1)
+
+    return args
+
+
+if __name__ == "__main__":
+    args = process_args()
+    data_series_folder = args.data
+
+    monitor = AudioModel("audio_model.keras")
+    background_noise_file = os.path.join(data_series_folder, "background_noise", "background_noise_roast_1.wav")
+    first_crack_file = os.path.join(data_series_folder, "first_crack", "first_crack_roast_1.wav")
+    monitor.classify(background_noise_file)
+    monitor.classify(first_crack_file)
 
     monitor.monitor_audio(input_device="iMac Microphone")

@@ -7,7 +7,15 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_io as tfio
 
-neils_data_folder = "/Users/neil/development/ai/data series"
+# disables warnings like: Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+
+
+# data_series_folder = "/Users/neil/development/ai/data series"
+# data_series_folder = r"/home/john/copy-of-google/data series"
 
 
 @tf.keras.saving.register_keras_serializable()
@@ -41,7 +49,7 @@ class Trainer:
     def audio_labels(cls):
         return list(cls.audio_mapping().keys())
 
-    def __init__(self, data_folder, epochs:int = 35):
+    def __init__(self, data_folder, epochs: int = 35):
         self.data_folder = data_folder
         self.model = None
         self.epochs = epochs
@@ -233,16 +241,23 @@ def dumpdataset(ds, label: str, labels: [str]):
 
 
 def process_args():
-    parser = argparse.ArgumentParser(
-        description='Run training')
+    parser = argparse.ArgumentParser(description='Run training')
     parser.add_argument('--epochs', type=int, help='Number of epochs to train for', default=40, required=False)
+    parser.add_argument('data', type=str, help='Data series folder, where the training data is')
     args = parser.parse_args()
+
+    # Check data series folder exists on disk
+    if not os.path.exists(args.data):
+        print(f"Data series folder {args.data} does not exist")
+        exit(1)
+
     return args
 
 
 if __name__ == "__main__":
     args = process_args()
-    trainer = Trainer(neils_data_folder, epochs=args.epochs)
+    data_series_folder = args.data
+    trainer = Trainer(data_series_folder, epochs=args.epochs)
     trainer.train_audio_from_data_folder()
     trainer.save_model()
 
