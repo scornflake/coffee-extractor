@@ -6,8 +6,9 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_io as tfio
 
-neils_data_folder = "/Users/neil/development/ai/data series"
-
+# neils_data_folder = "/Users/neil/development/ai/data series"
+johns_data_folder = r"C:\Users\johnc\Drive - Personal\Projects\Coffee AI\data series"
+neils_data_folder = johns_data_folder
 
 @tf.keras.saving.register_keras_serializable()
 class ReduceMeanLayer(tf.keras.layers.Layer):
