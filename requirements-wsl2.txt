@@ -85,3 +85,4 @@ Werkzeug
 wrapt
 
 pytesseract
+pyaudio
