@@ -90,7 +90,7 @@ I literally copy/pasted the entire Coffee AI directory into the home folder of m
 
 Not ideal, but I didn't want to spend time on this.
 
-# Run Editor - Tessaract
+# Run Editor - Tesseract
 
 The tesseract OCR command is installed via sudo apt get, and the python package via the requirements-wsl2.txt file.  
 
