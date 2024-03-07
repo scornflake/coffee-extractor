@@ -19,10 +19,5 @@ VOLUME /data
 VOLUME /data-series
 VOLUME /input-data-folder
 
-# Args: --audio --video input.spec.json
-# Working: /Users/neil/Documents/Coffee/2
-
-#CMD python /src/ai/hello.py
-
 CMD python /src/extractor.py
 
