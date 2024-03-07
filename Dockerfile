@@ -16,6 +16,7 @@ RUN pip install -r docker-requirements.txt
 VOLUME /src
 VOLUME /data
 VOLUME /data-series
+VOLUME /input-data-folder
 
 # Args: --audio --video input.spec.json
 # Working: /Users/neil/Documents/Coffee/2

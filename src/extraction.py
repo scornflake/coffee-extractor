@@ -24,7 +24,7 @@ def get_temperature_part_from_full_frame(frame, the_settings: Settings) -> int o
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
     digital_number_area = cv2.warpPerspective(frame, matrix, (digital_number_area.shape[1], digital_number_area.shape[0]))
     digital_number_area = cv2.cvtColor(digital_number_area, cv2.COLOR_BGR2RGB)
-    # make image 3x big, so that we can FAR better get contours out
+    # make image bigger, so that we can FAR better get contours out
     digital_number_area = cv2.resize(digital_number_area, (0, 0), fx=3, fy=3)
     return digital_number_area
 
@@ -177,10 +177,10 @@ def make_threshold(digital_number_area, lower: int = 127):
 def extract_lcd_and_ready_for_teseract(frame, frame_number, the_settings: Settings, temps_handler=None):
     # Extract the digital area from the frame, and find the temperature
     extracted_frame = get_temperature_part_from_full_frame(frame, the_settings=the_settings)
-    extracted_frame = extract_digits_from_readout2(extracted_frame, the_settings=the_settings)
+    extracted_frame = extract_digits_from_readout(extracted_frame, the_settings=the_settings)
 
-    # if extracted_frame is None:
-    #     return None
+    if extracted_frame is None:
+        return None
 
     if temps_handler:
         temps_handler(extracted_frame, frame_number, False)
