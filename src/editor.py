@@ -381,7 +381,7 @@ class Editor:
         self.lcd_preview_canvas.create_image(0, 0, image=photo, anchor="nw")
         self.lcd_preview_canvas.image = photo
 
-        # Try to get the number, via teseract
+        # Try to get the number, via tesseract
         parsed_value = parse_int_via_tesseract(opencv_image)
         if parsed_value is None:
             self.lcd_temp_label.config(text="LCD Temp: NONE")

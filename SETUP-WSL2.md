@@ -97,7 +97,7 @@ The tesseract OCR command is installed via sudo apt get, and the python package 
 To run the Editor, I used this: 
 
 ```bash
-export TESSDATA_PREFIX=../../src/coffee-extractor/teseract/tessdata
+export TESSDATA_PREFIX=../../src/coffee-extractor/tesseract/tessdata
 cd ./copy-of-google/1
 python ../../src/coffee-extractor/editor.py input.spec.json
 ```

@@ -8,7 +8,7 @@ import pytesseract
 from extraction import find_temperature_of_frame
 from movie import Movie
 from settings import Settings
-from src.args import args
+from args import args
 
 
 # Command line to parse movie file, and extract:
@@ -41,7 +41,7 @@ if is_mac():
 settings = Settings(args.input_spec)
 start_frame_number = args.start
 end_frame_number = args.end
-save_images_to_teseract = args.teseract
+save_images_to_tesseract = args.tesseract
 save_temps = args.temps
 extract_audio = args.audio
 extract_video = args.video
@@ -140,8 +140,8 @@ def extract_images_and_temps_from_video():
             print(f'Wrote frame {frame_number} to {image_file}')
 
             def per_frame_handler(lcd_part, frame_number):
-                if save_images_to_teseract:
-                    write_image(lcd_part, frame_number, 'teseract')
+                if save_images_to_tesseract:
+                    write_image(lcd_part, frame_number, 'tesseract')
 
             def per_temp_handler(temp, frame_number, blurred):
                 if save_temps:

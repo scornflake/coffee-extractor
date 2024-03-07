@@ -106,12 +106,12 @@ class Settings:
             exit(1)
 
         if not self.output_dir:
-            print('Error: output_dir is required')
+            print('Error: output_dir is required. Sort your life out.')
             exit(1)
 
-        if not os.path.exists(self.output_dir):
-            print(f'Error: output_dir {self.output_dir} does not exist')
-            exit(1)
+        # if not os.path.exists(self.output_dir):
+        #     print(f'Error: output_dir {self.output_dir} does not exist, really. I meant it.')
+        #     exit(1)
 
         if not self.first_crack_start:
             print('Error: first_crack_start is required')
@@ -134,7 +134,9 @@ class Settings:
             actual_filename = f'{label}_{self.identifier}_{filename}.{extension}'
         else:
             actual_filename = f'{label}_{self.identifier}.{extension}'
-        full_path = os.path.join(self.output_dir, label, actual_filename)
+
+        current_working = os.getcwd()
+        full_path = os.path.join(current_working, self.output_dir, label, actual_filename)
         # check folder exists
         folder = os.path.dirname(full_path)
         if not os.path.exists(folder):
