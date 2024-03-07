@@ -1,7 +1,19 @@
 - normalize the audio [-1.0, 1.0] (aparently load_wav is doing this)
 
+# Detect v2 lower/upper
+L: 140, 100, 230
+H: 195, 255, 255
+https://github.com/DevashishPrasad/LCD-OCR
+
+# Good for v1
+Skew: -6
+L: 30, 230, 110
+H: 120, 255, 255
+Blur: 6
+
 
 # TensorFlow
+- try PCEN via librosa, in realtime (play back roast to headphones, toggle PCEN on and off)
 - record the mean and standard deviation of the audio data at training time, and include in the model csv
   - normalize data coming from the mic (subtract the mean)
 - Maybe run a high pass filter, say, 10khz, through ALL the audio, then train on that (also need to during inference) 

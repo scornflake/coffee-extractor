@@ -12,6 +12,7 @@ from movie import Movie
 from settings import Settings
 from args import args
 
+
 # Command line to parse movie file, and extract:
 # - images every 15s
 # - the audio, to its own file
@@ -35,6 +36,7 @@ from args import args
 def is_mac():
     return platform.system() == 'Darwin'
 
+
 if is_mac():
     pytesseract.pytesseract.tesseract_cmd = '/usr/local/Cellar/tesseract/5.3.4/bin/tesseract'
 
@@ -42,7 +44,7 @@ settings = Settings(args.input_spec)
 start_frame_number = args.start
 end_frame_number = args.end
 save_images_to_teseract = args.teseract
-
+save_temps = args.temps
 extract_audio = args.audio
 extract_video = args.video
 
@@ -93,13 +95,13 @@ def is_temp_jmp_sensible(last_value, next_value) -> bool:
     distance = abs(last_value - next_value)
     sensible = False
     if last_value < 50:
-        sensible = next_value < last_value * 3.5
+        sensible = next_value < last_value * 4
     elif last_value < 90:
-        sensible = next_value < last_value * 2
+        sensible = next_value < last_value * 3
     elif last_value < 120:
-        sensible = next_value < last_value * 1.5
+        sensible = next_value < last_value * 2
     elif last_value < 180:
-        sensible = next_value < last_value * 1.3
+        sensible = next_value < last_value * 1.5
     else:
         sensible = next_value < last_value * 1.2
     if sensible:
@@ -143,7 +145,12 @@ def extract_images_and_temps_from_video():
                 if save_images_to_teseract:
                     write_image(lcd_part, frame_number, 'teseract')
 
-            temperature = find_temperature_of_frame(frame_number, frame, settings, per_frame_handler)
+            def per_temp_handler(temp, frame_number, blurred):
+                if save_temps:
+                    filename = "temp_" + ("blurred" if blurred else "normal")
+                    write_image(temp, frame_number, filename)
+
+            temperature = find_temperature_of_frame(frame_number, frame, settings, per_frame_handler, per_temp_handler)
 
             # Temps must always increase, but not equal to the previous temp
             if temperature is not None:

@@ -31,4 +31,6 @@ class Movie:
         # Get a specific frame from the movie
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
         ret, frame = self.cap.read()
+        # convert image to CV_32f
+        # print(f"FRAME properties: {frame.shape}, depth: {frame.dtype}, type: {type(frame)}, pixel format: {frame[0, 0]}")
         return frame

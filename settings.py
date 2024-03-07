@@ -87,7 +87,8 @@ class Settings:
     def write_to_file(self):
         # Write the input spec to a file
         self.save_values_to_input_spec()
-        with open(os.path.join(self.output_dir, self.spec_filename), 'w') as f:
+        folder_for_spec = os.getcwd()
+        with open(os.path.join(folder_for_spec, self.spec_filename), 'w') as f:
             json.dump(self.input_spec, f, indent=2)
 
     def validate(self):

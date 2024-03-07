@@ -4,7 +4,7 @@ import args
 import cv2
 from PIL import ImageTk, Image
 
-from extraction import extract_lcd_and_ready_for_teseract, parse_int_via_tesseract
+from extraction import extract_lcd_and_ready_for_teseract, parse_int_via_tesseract, extract_lcd_and_ready_for_teseract2
 from movie import Movie
 from settings import Settings
 
@@ -12,6 +12,7 @@ from settings import Settings
 # Basic UI that has a set of controls on the left (west), and a canvas taking up the rest of the right hand (east) side.
 class Editor:
     def __init__(self, master, the_settings: Settings):
+        self.video_frame_seconds_label = None
         self.lcd_temp_label = None
         self.current_video_frame = None
         self.lcd_preview_canvas = None
@@ -45,6 +46,10 @@ class Editor:
 
         self.put_movie_frame_onto_video_canvas()
 
+        # self.step_forward()
+        # self.step_forward()
+        # self.step_forward()
+
     def create_video_canvas_view(self, master):
         # The canvas takes up most of the view
         self.video_canvas = tkinter.Canvas(master, width=1920, height=1080)
@@ -72,19 +77,25 @@ class Editor:
         self.step_back_button.grid(row=0, column=0, sticky="nsew")
         self.step_forward_button = tkinter.Button(button_frame, text=">>", command=self.step_forward)
         self.step_forward_button.grid(row=0, column=1, sticky="nsew")
+        self.video_frame_seconds_label = tkinter.Label(button_frame, text="0.0")
+        self.video_frame_seconds_label.grid(row=0, column=3, sticky="nsew")
 
         return self.video_canvas
 
     def step_back(self):
-        self.video_frame_number = max(0, self.video_frame_number - self.movie.frame_count / 10)
+        self.video_frame_number = max(0, self.video_frame_number - self.movie.frame_count / 40)
         # update the slider to match
         self.slider.set(self.video_frame_number)
         self.put_movie_frame_onto_video_canvas()
 
     def step_forward(self):
-        self.video_frame_number = min(self.movie.frame_count, self.video_frame_number + self.movie.frame_count / 10)
+        self.video_frame_number = min(self.movie.frame_count, self.video_frame_number + self.movie.frame_count / 40)
         self.slider.set(self.video_frame_number)
         self.put_movie_frame_onto_video_canvas()
+
+    @property
+    def video_seconds(self):
+        return self.video_frame_number / self.movie.frame_rate
 
     def create_ui_overlay_view(self, parent):
         self.ui_overlay_canvas = tkinter.Canvas(parent, width=1920, height=1080)
@@ -108,6 +119,8 @@ class Editor:
                 width=3,
             )
 
+        self.update_lcd_preview()
+
     def put_movie_frame_onto_video_canvas(self):
         # Generate a frame from the movie and the digital area
         self.current_video_frame = self.movie.get_frame_number(self.video_frame_number)
@@ -119,6 +132,7 @@ class Editor:
         self.video_canvas.image = self.video_photo
 
         self.create_or_update_ui_overlay()
+        self.video_frame_seconds_label.config(text=f"{self.video_seconds:.2f}")
         self.update_lcd_preview()
 
     # Basic controls to adjust the canvas. left/top/width/height boxes.
@@ -240,7 +254,7 @@ class Editor:
         frame.grid(row=5, column=0, columnspan=2, sticky="nsew")
 
         # Put in a canvas, that's big enough to show the LCD preview
-        pct = 0.10
+        pct = 0.15
         self.lcd_preview_canvas = tkinter.Canvas(frame, width=1920 * pct, height=1080 * pct, background="black")
         self.lcd_preview_canvas.grid(row=0, column=0, sticky="nsew")
 
@@ -353,7 +367,11 @@ class Editor:
             return
 
         # Using the current video frame, perform the same operations as the extractor
-        opencv_image = extract_lcd_and_ready_for_teseract(self.current_video_frame, self.settings)
+        opencv_image = extract_lcd_and_ready_for_teseract2(self.current_video_frame, self.video_frame_number, self.settings)
+        if opencv_image is None:
+            self.lcd_temp_label.config(text="NO IMAGE GENERATED")
+            return
+
         # Convert to a PIL image
         pil_image = Image.fromarray(opencv_image)
         # Convert to a PhotoImage
