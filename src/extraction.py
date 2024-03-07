@@ -179,11 +179,14 @@ def extract_lcd_and_ready_for_teseract(frame, frame_number, the_settings: Settin
     extracted_frame = get_temperature_part_from_full_frame(frame, the_settings=the_settings)
     extracted_frame = extract_digits_from_readout2(extracted_frame, the_settings=the_settings)
 
+    # if extracted_frame is None:
+    #     return None
+
     if temps_handler:
         temps_handler(extracted_frame, frame_number, False)
 
     blur = the_settings.lcd_blur_amount
-    kernel = np.ones((blur, blur), np.float32) / 10
+    kernel = np.ones((blur, blur), np.float32) / 5
     extracted_frame = cv2.filter2D(extracted_frame, -1, kernel)
 
     if temps_handler:
@@ -206,7 +209,7 @@ def extract_lcd_and_ready_for_teseract2(frame, frame_number, the_settings: Setti
 
 def find_temperature_of_frame(frame_number, frame, the_settings: Settings, frame_handler, temps_handler) -> int or None:
     # Extract the digital area from the frame, and find the temperature
-    digital_number_area = extract_lcd_and_ready_for_teseract(frame, frame_number, the_settings=the_settings)
+    digital_number_area = extract_lcd_and_ready_for_teseract(frame, frame_number, the_settings=the_settings, temps_handler=temps_handler)
 
     # digital_number_area = new_image_from_contours(digital_number_area, thickness=1)
     # digital_number_area = make_threshold(digital_number_area)

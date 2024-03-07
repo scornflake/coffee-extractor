@@ -4,7 +4,7 @@ from src import args
 import cv2
 from PIL import ImageTk, Image
 
-from extraction import parse_int_via_tesseract, extract_lcd_and_ready_for_teseract2
+from extraction import parse_int_via_tesseract, extract_lcd_and_ready_for_teseract2, extract_lcd_and_ready_for_teseract
 from movie import Movie
 from settings import Settings
 
@@ -367,7 +367,8 @@ class Editor:
             return
 
         # Using the current video frame, perform the same operations as the extractor
-        opencv_image = extract_lcd_and_ready_for_teseract2(self.current_video_frame, self.video_frame_number, self.settings)
+        opencv_image = extract_lcd_and_ready_for_teseract(self.current_video_frame, self.video_frame_number, self.settings)
+        # opencv_image = extract_lcd_and_ready_for_teseract2(self.current_video_frame, self.video_frame_number, self.settings)
         if opencv_image is None:
             self.lcd_temp_label.config(text="NO IMAGE GENERATED")
             return

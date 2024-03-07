@@ -17,6 +17,10 @@ VOLUME /src
 VOLUME /data
 VOLUME /data-series
 
+# Args: --audio --video input.spec.json
+# Working: /Users/neil/Documents/Coffee/2
+
 #CMD python /src/ai/hello.py
+
 CMD python /src/extractor.py
 

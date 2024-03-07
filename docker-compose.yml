@@ -11,3 +11,4 @@ services:
     volumes:
       - ./src:/src
       - ./data:/data
+      - /Users/neil/Documents/Coffee/data-series:/data-series
