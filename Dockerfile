@@ -11,7 +11,7 @@ RUN pip install -r docker-requirements.txt
 ## Copy expected source code + data into the container
 #COPY src /src
 #COPY data /data
-COPY data/tesseract /data/teseract
+COPY data/tesseract /data/tesseract
 
 # We expect src/data to be
 VOLUME /src
