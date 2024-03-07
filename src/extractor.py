@@ -38,6 +38,10 @@ def is_mac():
 if is_mac():
     pytesseract.pytesseract.tesseract_cmd = '/usr/local/Cellar/tesseract/5.3.4/bin/tesseract'
 
+# current working dir
+cwd = os.getcwd()
+print("Current working directory: {0}".format(cwd))
+
 settings = Settings(args.input_spec)
 start_frame_number = args.start
 end_frame_number = args.end
