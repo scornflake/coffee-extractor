@@ -11,4 +11,4 @@ services:
     volumes:
       - ./src:/src
       - ./data:/data
-      - /Users/neil/Documents/Coffee/data-series:/data-series
+      - ${DATA_SERIES_FOLDER}:/data-series
