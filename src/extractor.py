@@ -1,5 +1,3 @@
-import argparse
-
 import cv2
 import os
 import time
@@ -10,7 +8,7 @@ import pytesseract
 from extraction import find_temperature_of_frame
 from movie import Movie
 from settings import Settings
-from args import args
+from src.args import args
 
 
 # Command line to parse movie file, and extract:

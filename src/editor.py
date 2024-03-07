@@ -1,10 +1,10 @@
 import tkinter
 
-import args
+from src import args
 import cv2
 from PIL import ImageTk, Image
 
-from extraction import extract_lcd_and_ready_for_teseract, parse_int_via_tesseract, extract_lcd_and_ready_for_teseract2
+from extraction import parse_int_via_tesseract, extract_lcd_and_ready_for_teseract2
 from movie import Movie
 from settings import Settings
 

@@ -9,7 +9,7 @@ import tensorflow_hub as hub
 import sounddevice as sd
 import tensorflow_io as tfio
 
-from ai.audio_trainer import ReduceMeanLayer, Trainer
+from src.ai.audio_trainer import ReduceMeanLayer, Trainer
 
 
 async def inputstream_generator(input_device: int | str, channels=1, **kwargs):

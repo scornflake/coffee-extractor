@@ -16,7 +16,7 @@ yamnet_model = hub.load(yamnet_model_handle)
 # Load up the .wav
 testing_wav_file_name = tf.keras.utils.get_file('miaow_16k.wav',
                                                 'https://storage.googleapis.com/audioset/miaow_16k.wav',
-                                                cache_dir='./',
+                                                cache_dir='../',
                                                 cache_subdir='test_data')
 
 
@@ -66,13 +66,13 @@ print('...')
 # Think it's already normalized, 16khz?
 _ = tf.keras.utils.get_file('esc-50.zip',
                             'https://github.com/karoldvl/ESC-50/archive/master.zip',
-                            cache_dir='./',
+                            cache_dir='../',
                             cache_subdir='datasets',
                             extract=True)
 
 # This part grabs just cat/dog from the list of all audio
 esc50_csv = './datasets/ESC-50-master/meta/esc50.csv'
-base_data_path = './datasets/ESC-50-master/audio/'
+base_data_path = '../data/datasets/ESC-50-master/audio/'
 
 pd_data = pd.read_csv(esc50_csv)
 pd_data.head()

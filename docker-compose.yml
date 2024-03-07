@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  extractor:
+    image: coffee:latest
+    restart: always
+    build:
+      context: .
+#    ports:
+#      - "8088:80" # Only 80 because we'd front this with a reverse proxy for SSL. 8088 means it'll work on same port as Django, thus local.shinywhitebox.com will work!
+#    volumes:
+#      - wft-blobs:/blobs
