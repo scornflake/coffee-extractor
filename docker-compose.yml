@@ -6,8 +6,6 @@ services:
     restart: always
     build:
       context: .
-#    ports:
-#      - "8088:80" # Only 80 because we'd front this with a reverse proxy for SSL. 8088 means it'll work on same port as Django, thus local.shinywhitebox.com will work!
     working_dir: /input-data-folder
     volumes:
       - ./src:/src
@@ -15,4 +13,15 @@ services:
       - ${DATA_FOLDER}:/input-data-folder
       - ${DATA_SERIES_FOLDER}:/data-series
 
+
+  trainer:
+    image: coffee:latest
+    restart: always
+    build:
+      context: .
+    command: python /src/ai/audio_trainer.py /data-series --epochs 60
+    volumes:
+      - ./src:/src
+      - ./data:/data
+      - ${DATA_SERIES_FOLDER}:/data-series
 

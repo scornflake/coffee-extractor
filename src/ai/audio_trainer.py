@@ -89,6 +89,12 @@ class Trainer:
             path_for_labelled_data = os.path.join(self.data_folder, label)
             target_index = self.audio_target_for_label(label)
             print(f"Use: {label}, target: {target_index}")
+            # check the folder exists
+            if not os.path.exists(path_for_labelled_data):
+                # create folder
+                print(f"Looking for folder: {path_for_labelled_data}. It doesn't exist. Have you configured input data series folder correctly?")
+                exit(-3)
+
             for file in os.listdir(path_for_labelled_data):
                 full_path = os.path.join(path_for_labelled_data, file)
                 filenames.append(full_path)
