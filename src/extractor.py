@@ -1,42 +1,26 @@
-import cv2
-import os
-import time
 import json
-import subprocess, platform
+import os
+import subprocess
+import time
 
-import pytesseract
+import cv2
+
+from args import args
 from extraction import find_temperature_of_frame
 from movie import Movie
 from settings import Settings
-from args import args
-
 
 # Command line to parse movie file, and extract:
 # - images every 15s
 # - the audio, to its own file
-# - create a json file with the following structure:
-# {
-#   "images": [
-#     { "time": "00:00:15", "filename": "image1.png" },
-#     { "time": "00:00:30", "filename": "image2.png" },
-#     ...
-#   ],
-#   "audio": "audio.mp3",
-#   "first_crack_audio": "first_crack.mp3",
-#   "second_crack_audio": "second_crack.mp3",
-#   "chamber_temps": [
-#     { "time": "00:00:15", "temp": 23.5 },
-#     { "time": "00:00:30", "temp": 24.0 },
-#     ...
-#   ]
-# }
+# - create a json file with some metadata
 
-def is_mac():
-    return platform.system() == 'Darwin'
-
-
-if is_mac():
-    pytesseract.pytesseract.tesseract_cmd = '/usr/local/Cellar/tesseract/5.3.4/bin/tesseract'
+# def is_mac():
+#     return platform.system() == 'Darwin'
+#
+#
+# if is_mac():
+#     pytesseract.pytesseract.tesseract_cmd = '/usr/local/Cellar/tesseract/5.3.4/bin/tesseract'
 
 # current working dir
 cwd = os.getcwd()
@@ -54,7 +38,7 @@ json_output = {
     "images": []
 }
 
-movie = Movie(settings.movie_file)
+movie = Movie(settings.absolute_movie_file)
 
 
 def clear_files_from(folder):
@@ -182,17 +166,17 @@ def extract_images_and_temps_from_video():
 
 def extract_audio_from_movie():
     # Extract the audio from the movie file, and write this as audio.wav to the output directory
-    audio_file = "audio.wav"
-    subprocess.run(['ffmpeg', '-y', '-i', settings.movie_file, '-vn', audio_file])
+    all_of_audio_file = settings.input_file_path("all_audio.wav")
+    subprocess.run(['ffmpeg', '-y', '-i', settings.absolute_movie_file, '-vn', all_of_audio_file])
 
-    # Create first_crack and second_crack audio files, based on the input spec
+    # Create first_crack and second_crack audio files, bdased on the input spec
     first_crack_start = settings.first_crack_start
     first_crack_end = settings.first_crack_end
 
     # Use ffmpeg to extract the audio from first_crack_start to first_crack_end
     first_crack_audio_file = settings.output_filename('first_crack', extension='wav')
     subprocess.run(
-        ['ffmpeg', '-y', '-i', audio_file, '-ss', first_crack_start, '-to', first_crack_end, first_crack_audio_file])
+        ['ffmpeg', '-y', '-i', all_of_audio_file, '-ss', first_crack_start, '-to', first_crack_end, first_crack_audio_file])
 
     second_crack_start = settings.second_crack_start
     second_crack_end = settings.second_crack_end
@@ -200,15 +184,15 @@ def extract_audio_from_movie():
     # Use ffmpeg to extract the audio from second_crack_start to second_crack_end
     second_crack_audio_file = settings.output_filename('second_crack', extension='wav')
     subprocess.run(
-        ['ffmpeg', '-y', '-i', audio_file, '-ss', second_crack_start, '-to', second_crack_end, second_crack_audio_file])
+        ['ffmpeg', '-y', '-i', all_of_audio_file, '-ss', second_crack_start, '-to', second_crack_end, second_crack_audio_file])
 
     # Create a sample of audio, which we'll presume to be background noise
     background_noise = settings.output_filename('background_noise', extension='wav')
     subprocess.run(
-        ['ffmpeg', '-y', '-i', audio_file, '-ss', '60', '-to', '80', background_noise])
+        ['ffmpeg', '-y', '-i', all_of_audio_file, '-ss', '60', '-to', '80', background_noise])
 
     # Clean up, remove the old audio file
-    os.remove(audio_file)
+    os.remove(all_of_audio_file)
 
 
 if extract_video:
@@ -221,6 +205,6 @@ if extract_audio:
     extract_audio_from_movie()
 
 # Write this to metadata.json, within the output directory
-metadata_file = settings.output_filename('metadata', 'json')
+metadata_file = settings.output_filename('metadata', extension='json')
 with open(metadata_file, 'w') as f:
     json.dump(json_output, f, indent=2)
