@@ -3,7 +3,7 @@ version: '3.8'
 services:
   extractor:
     image: coffee:latest
-    restart: always
+    restart: no
     build:
       context: .
     working_dir: /input-data-folder
@@ -20,7 +20,7 @@ services:
 
   trainer:
     image: coffee:latest
-    restart: always
+    restart: no
     build:
       context: .
     command: python /src/ai/audio_trainer.py /data-series --epochs 60
@@ -29,4 +29,15 @@ services:
       - ./data:/data
       - ${DATA_SERIES_FOLDER}:/data-series
       - ${MODEL_FOLDER}:/model
+
+  learning:
+    image: coffee:latest
+    restart: no
+    build:
+      context: .
+    command: python /src/learning/training-test.py
+    volumes:
+      - ./src:/src
+      - ./data:/data
+      - ${DATA_SERIES_FOLDER}:/data-series
 
