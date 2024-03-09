@@ -56,7 +56,7 @@ class Trainer:
         # Get the filenames, labels
         dataset = self.create_audio_files_dataset()
 
-        @tf.function
+        # @tf.function
         def from_tuple_to_wav_label(filename, target):
             wav_mono = self.load_wav_16k_mono(filename)
             return wav_mono, target
