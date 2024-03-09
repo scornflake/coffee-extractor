@@ -19,5 +19,5 @@ VOLUME /data
 VOLUME /data-series
 VOLUME /input-data-folder
 
-CMD python /src/extractor.py
+CMD /bin/bash
 

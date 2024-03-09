@@ -1,6 +1,11 @@
 import tensorflow as tf
 import numpy as np
-# import tensorflow_datasets as tfds
+from tensorflow.keras.datasets import mnist
 import matplotlib.pyplot as plt
 
-print("hello training test")
+(xtrain , ytrain) , (xtest , ytest) = mnist.load_data()
+xtrain.shape
+xtest.shape
+
+num_labels = len(np.unique(ytrain))
+num_labels
