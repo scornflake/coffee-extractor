@@ -30,7 +30,7 @@ class Editor:
         self.master.title("Editor")
         self.video_frame_number = 1000
 
-        self.movie = Movie(self.settings.movie_file)
+        self.movie = Movie(self.settings.absolute_movie_file)
         self.video_frame = None
 
         self.master.grid_rowconfigure(0, weight=1)
@@ -401,7 +401,7 @@ def save_and_quit():
 # Make it go!
 root = tkinter.Tk()
 editor = Editor(root, settings)
-root.winfo_toplevel().title(f"Editing for {settings.movie_file}, {settings.identifier}")
+root.winfo_toplevel().title(f"Editing for {settings.absolute_movie_file}, {settings.identifier}")
 
 menubar = tkinter.Menu(root)
 mac_app_menu = tkinter.Menu(menubar, name="apple")

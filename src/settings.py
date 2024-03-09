@@ -48,9 +48,25 @@ class Settings:
 
         self.spec_filename = spec_filename
 
-        self.identifier = self.input_spec["identifier"]
+        # Identifier is now based on where the input spec is located.
+        # We have a convention of folders, where each roast is in a numbered folder, and input.spec.json is in that folder.
+        # This means we can extract our own identifier from the folder name
+
+        # the parent folder for the spec file (spec_filename) should be an integer number >= 1
+        parent_folder_name = os.path.basename(os.path.dirname(spec_filename))
+
+        self.identifier = int(parent_folder_name)
+        self.identifier = "roast_" + str(self.identifier)
+
         self.movie_file = self.input_spec["movie_file"]
-        self.output_dir = self.input_spec["output_dir"] or "."
+
+        # Again, by convention, the output_dir is a sibling to the roast file folders
+        self.input_dir = os.path.dirname(spec_filename)
+        self.output_dir = os.path.join(os.path.dirname(os.path.dirname(spec_filename)), "data-series")
+        # this folder should exist
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+
         self.lcd_quad_skew = self.input_spec["lcd_quad_skew"] or 0
         self.target_temp = self.input_spec["target_temp"] or 0
         self.digital_area = Area.from_json(self.input_spec["digital_area"])
@@ -68,9 +84,7 @@ class Settings:
 
     def save_values_to_input_spec(self):
         # Save the values to the input spec
-        self.input_spec["identifier"] = self.identifier
         self.input_spec["movie_file"] = self.movie_file
-        self.input_spec["output_dir"] = self.output_dir
         self.input_spec["lcd_quad_skew"] = self.lcd_quad_skew
         self.input_spec["target_temp"] = self.target_temp
         self.input_spec["digital_area"] = self.digital_area.to_json()
@@ -91,22 +105,22 @@ class Settings:
         with open(os.path.join(folder_for_spec, self.spec_filename), 'w') as f:
             json.dump(self.input_spec, f, indent=2)
 
+    def input_file_path(self, filename):
+        return os.path.join(self.input_dir, filename)
+
+    @property
+    def absolute_movie_file(self):
+        return self.input_file_path(self.movie_file)
+
     def validate(self):
         # all the parameters in the input file specification must exist and be valid
         if not self.movie_file:
             print('Error: movie_file is required')
             exit(1)
 
-        if not self.identifier:
-            print('Error: identifier is required')
-            exit(1)
-
-        if not os.path.exists(self.movie_file):
-            print(f'Error: movie_file {self.movie_file} does not exist')
-            exit(1)
-
-        if not self.output_dir:
-            print('Error: output_dir is required. Sort your life out.')
+        fq_movie_path = self.input_file_path(self.movie_file)
+        if not os.path.exists(fq_movie_path):
+            print(f'Error: movie_file {fq_movie_path} does not exist')
             exit(1)
 
         # if not os.path.exists(self.output_dir):

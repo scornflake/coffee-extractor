@@ -15,6 +15,7 @@ services:
       - ./data:/data
       - ${DATA_FOLDER}:/input-data-folder
       - ${DATA_SERIES_FOLDER}:/data-series
+      - ${MODEL_FOLDER}:/model
 
 
   trainer:
@@ -27,4 +28,5 @@ services:
       - ./src:/src
       - ./data:/data
       - ${DATA_SERIES_FOLDER}:/data-series
+      - ${MODEL_FOLDER}:/model
 

@@ -1,4 +1,5 @@
 import argparse
+# disables warnings like: Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
 import os
 
 import pandas as pd
@@ -7,16 +8,9 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_io as tfio
 
-# disables warnings like: Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
-import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-
-
-# data_series_folder = "/Users/neil/development/ai/data series"
-# data_series_folder = r"/home/john/copy-of-google/data series"
-
+model_root_folder = "/model"
 
 @tf.keras.saving.register_keras_serializable()
 class ReduceMeanLayer(tf.keras.layers.Layer):
@@ -205,7 +199,7 @@ class Trainer:
         if self.model is None:
             raise ValueError("No model to save")
 
-        model_filename = "audio_model.keras"
+        model_filename = os.path.join(model_root_folder, "audio_model.keras")
         print(f"Saving model to: {model_filename}")
 
         input_segment = tf.keras.layers.Input(shape=(), dtype=tf.float32, name='audio')
