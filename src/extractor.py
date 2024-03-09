@@ -1,15 +1,14 @@
-import cv2
-import os
-import time
 import json
-import subprocess, platform
+import os
+import subprocess
+import time
 
-import pytesseract
+import cv2
+
+from args import args
 from extraction import find_temperature_of_frame
 from movie import Movie
 from settings import Settings
-from args import args
-
 
 # Command line to parse movie file, and extract:
 # - images every 15s
