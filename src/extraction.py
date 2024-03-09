@@ -93,8 +93,10 @@ def extract_digits_from_readout2(image, the_settings: Settings):
 
 
 def extract_digits_from_readout(image, the_settings: Settings):
-    # Invert the image
+    # Invert the image so that we are targeting GREEN
     inverted = cv2.bitwise_not(image)
+
+    # Push into HSV for filtering
     img_hsv = cv2.cvtColor(inverted, cv2.COLOR_BGR2HSV)
 
     # Filter the image so that we're left with only cyan/green
@@ -174,12 +176,13 @@ def make_threshold(digital_number_area, lower: int = 127):
     return digital_number_area
 
 
-def extract_lcd_and_ready_for_teseract(frame, frame_number, the_settings: Settings, temps_handler=None):
+def extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings: Settings, temps_handler=None):
     # Extract the digital area from the frame, and find the temperature
     extracted_frame = get_temperature_part_from_full_frame(frame, the_settings=the_settings)
     extracted_frame = extract_digits_from_readout(extracted_frame, the_settings=the_settings)
 
     if extracted_frame is None:
+        print("No digits found in frame", frame_number)
         return None
 
     if temps_handler:
@@ -196,7 +199,7 @@ def extract_lcd_and_ready_for_teseract(frame, frame_number, the_settings: Settin
     return extracted_frame
 
 
-def extract_lcd_and_ready_for_teseract2(frame, frame_number, the_settings: Settings, temps_handler=None):
+def extract_lcd_and_ready_for_tesseract2(frame, frame_number, the_settings: Settings, temps_handler=None):
     # Extract the digital area from the frame, and find the temperature
     extracted_frame = get_temperature_part_from_full_frame(frame, the_settings=the_settings)
     extracted_frame = extract_digits_from_readout2(extracted_frame, the_settings=the_settings)
@@ -209,7 +212,7 @@ def extract_lcd_and_ready_for_teseract2(frame, frame_number, the_settings: Setti
 
 def find_temperature_of_frame(frame_number, frame, the_settings: Settings, frame_handler, temps_handler) -> int or None:
     # Extract the digital area from the frame, and find the temperature
-    digital_number_area = extract_lcd_and_ready_for_teseract(frame, frame_number, the_settings=the_settings, temps_handler=temps_handler)
+    digital_number_area = extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings=the_settings, temps_handler=temps_handler)
 
     # digital_number_area = new_image_from_contours(digital_number_area, thickness=1)
     # digital_number_area = make_threshold(digital_number_area)
