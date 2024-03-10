@@ -1,6 +1,6 @@
 # https://www.tensorflow.org/install/docker
 
-FROM tensorflow/tensorflow:2.15.0
+FROM tensorflow/tensorflow:2.15.0-gpu
 
 RUN apt-get update
 RUN apt-get install -y libasound-dev portaudio19-dev libgl1-mesa-glx tesseract-ocr ffmpeg

@@ -41,7 +41,7 @@ services:
       - ${DATA_SERIES_FOLDER}:/data-series
 
   jupyter:
-    image: tensorflow/tensorflow:nightly-jupyter
+    image: tensorflow/tensorflow:latest-gpu-jupyter
     ports:
       - "8888:8888"
     restart: no
