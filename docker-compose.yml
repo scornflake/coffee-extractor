@@ -34,14 +34,14 @@ services:
     restart: no
     build:
       context: .
-    command: python /src/learning/training-test.py
+    command: python /src/learning/training-example-01.py
     volumes:
       - ./src:/src
       - ./data:/data
       - ${DATA_SERIES_FOLDER}:/data-series
 
   jupyter:
-    image: tensorflow/tensorflow:nightly-jupyter
+    image: tensorflow/tensorflow:latest-gpu-jupyter
     ports:
       - "8888:8888"
     restart: no

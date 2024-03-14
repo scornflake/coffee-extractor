@@ -12,7 +12,7 @@ Prepare to be able to build the WHL deps as required, by:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y python3 python3-pip python3-venv python3-dev gcc
+sudo apt-get install -y python3.11 python3.11-venv python3.11-dev gcc
 sudo apt-get install -y build-essential portaudio19-dev tesseract-ocr ffmpeg python3-tk libgl1-mesa-glx
 ```
 
