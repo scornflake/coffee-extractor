@@ -45,7 +45,6 @@ class Settings:
             self.input_spec = json.load(f)
 
         self.ensure_input_spec_has_all_fields()
-
         self.spec_filename = spec_filename
 
         # Identifier is now based on where the input spec is located.
@@ -80,6 +79,10 @@ class Settings:
         self.upper_threshold = HSV.from_json(self.input_spec["lcd_upper_threshold"])
         self.lcd_blur_amount = self.input_spec["lcd_blur_amount"] or 3
 
+        self.lcd_testing = self.input_spec.get("lcd_testing", {})
+        # all the indexes of self.lcd_testing should be integers
+        self.lcd_testing = {int(k): v for k, v in self.lcd_testing.items()}
+
         self.validate()
 
     def save_values_to_input_spec(self):
@@ -97,6 +100,8 @@ class Settings:
         self.input_spec["lcd_low_threshold"] = self.low_threshold.to_json()
         self.input_spec["lcd_upper_threshold"] = self.upper_threshold.to_json()
         self.input_spec["lcd_blur_amount"] = self.lcd_blur_amount
+
+        self.input_spec["lcd_testing"] = self.lcd_testing
 
     def write_to_file(self):
         # Write the input spec to a file
@@ -142,6 +147,12 @@ class Settings:
         if not self.second_crack_end:
             print('Error: second_crack_end is required')
             exit(1)
+
+    def set_true_value_for_lcd(self, index: int, value: int):
+        self.lcd_testing[index] = value
+
+    def get_true_value_for_lcd(self, index: int) -> int or None:
+        return self.lcd_testing.get(index, None)
 
     def output_filename(self, label, filename: str = None, extension: str = None):
         if filename is not None:

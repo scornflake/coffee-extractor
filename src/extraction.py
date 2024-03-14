@@ -94,7 +94,8 @@ def extract_digits_from_readout2(image, the_settings: Settings):
 
 def extract_digits_from_readout(image, the_settings: Settings):
     # Invert the image so that we are targeting GREEN
-    inverted = cv2.bitwise_not(image)
+    # inverted = cv2.bitwise_not(image)
+    inverted = image
 
     # Push into HSV for filtering
     img_hsv = cv2.cvtColor(inverted, cv2.COLOR_BGR2HSV)
@@ -109,9 +110,10 @@ def extract_digits_from_readout(image, the_settings: Settings):
 
 
 def parse_int_via_tesseract(image) -> int or None:
-    custom_config = r'--psm 7 -c tessedit_char_whitelist=.0123456789'
+    custom_config = r'--psm 8 -c tessedit_char_whitelist=.0123456789'
     # text = pytesseract.image_to_string(image, config=custom_config, lang="letsgodigital")
-    text = pytesseract.image_to_string(image, config=custom_config, lang="lets")
+    # text = pytesseract.image_to_string(image, config=custom_config, lang="lets")
+    text = pytesseract.image_to_string(image, config=custom_config, lang="genecafe")
     # text = pytesseract.image_to_string(image, config=custom_config)
 
     # Strip any '.' from text
