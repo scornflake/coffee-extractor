@@ -1,3 +1,5 @@
 data/datasets
 
 /src/train-tesseract/data/genecafe-ground-truth/
+/src/learning/aclImdb
+/src/learning/aclImdb_v1.tar.gz
