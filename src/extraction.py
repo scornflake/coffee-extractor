@@ -22,19 +22,21 @@ def get_temperature_part_from_full_frame(frame, the_settings: Settings) -> int o
     pts2 = np.float32(
         [[0, 0], [area.width, 0], [0, area.height], [area.width, area.height]])
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    digital_number_area = cv2.warpPerspective(frame, matrix, (digital_number_area.shape[1], digital_number_area.shape[0]))
+    digital_number_area = cv2.warpPerspective(frame, matrix,
+                                              (digital_number_area.shape[1], digital_number_area.shape[0]))
     digital_number_area = cv2.cvtColor(digital_number_area, cv2.COLOR_BGR2RGB)
     # make image bigger, so that we can FAR better get contours out
     digital_number_area = cv2.resize(digital_number_area, (0, 0), fx=3, fy=3)
+
     return digital_number_area
 
 
 def extract_digits_from_readout2(image, the_settings: Settings):
-
     # Converts images from BGR to HSV
     hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     lower_red = np.array([the_settings.low_threshold.h, the_settings.low_threshold.s, the_settings.low_threshold.v])
-    upper_red = np.array([the_settings.upper_threshold.h, the_settings.upper_threshold.s, the_settings.upper_threshold.v])
+    upper_red = np.array(
+        [the_settings.upper_threshold.h, the_settings.upper_threshold.s, the_settings.upper_threshold.v])
 
     # This creates a mask of red coloured objects found in the frame.
     # i.e: digits, and little decimal place thingies
@@ -80,7 +82,6 @@ def extract_digits_from_readout2(image, the_settings: Settings):
             cv2.drawContours(mask2, [c], -1, 0, -1)
             continue
 
-
     # Remove ignored contours
     newimage = cv2.bitwise_and(erode.copy(), dilate.copy(), mask=mask2)
     # return newimage
@@ -104,16 +105,16 @@ def extract_digits_from_readout(image, the_settings: Settings):
     lower = np.array([the_settings.low_threshold.h, the_settings.low_threshold.s, the_settings.low_threshold.v])
     upper = np.array([the_settings.upper_threshold.h, the_settings.upper_threshold.s, the_settings.upper_threshold.v])
     mask = cv2.inRange(img_hsv, lower, upper)
-    green_only = cv2.bitwise_and(inverted, inverted, mask=mask)
+    just_the_digits = cv2.bitwise_and(inverted, inverted, mask=mask)
 
-    return green_only
+    return just_the_digits
 
 
 def parse_int_via_tesseract(image) -> int or None:
     custom_config = r'--psm 8 -c tessedit_char_whitelist=.0123456789'
     # text = pytesseract.image_to_string(image, config=custom_config, lang="letsgodigital")
-    # text = pytesseract.image_to_string(image, config=custom_config, lang="lets")
-    text = pytesseract.image_to_string(image, config=custom_config, lang="genecafe")
+    text = pytesseract.image_to_string(image, config=custom_config, lang="lets")
+    # text = pytesseract.image_to_string(image, config=custom_config, lang="genecafe")
     # text = pytesseract.image_to_string(image, config=custom_config)
 
     # Strip any '.' from text
@@ -178,10 +179,19 @@ def make_threshold(digital_number_area, lower: int = 127):
     return digital_number_area
 
 
+def sharpen(image):
+    # sharpen the image
+    kern_size = 5
+    blurred = cv2.GaussianBlur(image, (kern_size, kern_size), 0)
+    return cv2.addWeighted(image, 1.5, blurred, -0.5, 0)
+
+
 def extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings: Settings, temps_handler=None):
     # Extract the digital area from the frame, and find the temperature
     extracted_frame = get_temperature_part_from_full_frame(frame, the_settings=the_settings)
     extracted_frame = extract_digits_from_readout(extracted_frame, the_settings=the_settings)
+    # extracted_frame = sharpen(extracted_frame)
+    # extracted_frame = new_image_from_contours(extracted_frame, thickness=3)
 
     if extracted_frame is None:
         print("No digits found in frame", frame_number)
@@ -190,6 +200,14 @@ def extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings: Setti
     if temps_handler:
         temps_handler(extracted_frame, frame_number, False)
 
+    # Dilate and then erode
+    extracted_frame = cv2.dilate(extracted_frame, None, iterations=3)
+    extracted_frame = cv2.erode(extracted_frame, None, iterations=2)
+    extracted_frame = sharpen(extracted_frame)
+    # return extracted_frame
+    # extracted_frame = cv2.dilate(extracted_frame, None, iterations=1)
+    # extracted_frame = sharpen(extracted_frame)
+
     blur = the_settings.lcd_blur_amount
     kernel = np.ones((blur, blur), np.float32) / 5
     extracted_frame = cv2.filter2D(extracted_frame, -1, kernel)
@@ -197,7 +215,6 @@ def extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings: Setti
     if temps_handler:
         temps_handler(extracted_frame, frame_number, True)
 
-    # extracted_frame = dilate_with_kernel(extracted_frame, kernel_size=2)
     return extracted_frame
 
 
@@ -214,7 +231,8 @@ def extract_lcd_and_ready_for_tesseract2(frame, frame_number, the_settings: Sett
 
 def find_temperature_of_frame(frame_number, frame, the_settings: Settings, frame_handler, temps_handler) -> int or None:
     # Extract the digital area from the frame, and find the temperature
-    digital_number_area = extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings=the_settings, temps_handler=temps_handler)
+    digital_number_area = extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings=the_settings,
+                                                              temps_handler=temps_handler)
 
     # digital_number_area = new_image_from_contours(digital_number_area, thickness=1)
     # digital_number_area = make_threshold(digital_number_area)

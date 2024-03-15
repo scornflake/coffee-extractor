@@ -16,6 +16,7 @@ sudo apt-get install -y python3.11 python3.11-venv python3.11-dev python3.11-tk 
 sudo apt-get install -y build-essential portaudio19-dev tesseract-ocr ffmpeg python3-tk libgl1-mesa-glx
 ```
 
+
 # CUDA on WSL2
 
 Get CUDA drivers for WSL2 on Windows. 
@@ -78,17 +79,6 @@ So it's off to the races we go with the pip install:
 ```bash
 pip install -r requirements-wsl2.txt
 ```
-
-# Copy Google Data
-
-Google Drive syncs a .LNK file to the Windows file system to represent the "My Drive" folder.
-
-There is no way to traverse a Windows .LNK file in WSL2, you will need to copy the 
-Google data *into* your WSL2 environment.  
-
-I literally copy/pasted the entire Coffee AI directory into the home folder of my WSL2 user.
-
-Not ideal, but I didn't want to spend time on this.
 
 # Run Editor - Tesseract
 

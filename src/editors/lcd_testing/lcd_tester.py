@@ -21,6 +21,7 @@ class CellParts:
 
 class LCDCell(tkinter.Frame):
     def __init__(self, settings_provider, frame_number: int, movie: Movie, master=None, cnf=None, **kwargs):
+        self.indicator_size = 15
         self.indicator_label = None
         self.frame_number = frame_number
         self.frame = None
@@ -60,8 +61,9 @@ class LCDCell(tkinter.Frame):
         if value_for_lcd is not None:
             self.actual_entry.insert(0, value_for_lcd)
 
-        self.indicator_label = tkinter.Canvas(self, width=20, height=20)
-        self.indicator_label.grid(row=1, column=2)
+        self.indicator_size = 19
+        self.indicator_label = tkinter.Canvas(self, width=self.indicator_size, height=self.indicator_size)
+        self.indicator_label.grid(row=1, column=2, padx=5, pady=5)
 
         def save_to_settings(event):
             settings = self.settings_provider()
@@ -81,20 +83,25 @@ class LCDCell(tkinter.Frame):
         # self.refresh_image()
         # self.lcd_image.after(100 + (400 * self.index), self.refresh_image)
 
-    def update_tess_value_label(self):
-        self.tesseract_label.config(text=f"Tess: {self.tesseract_value}")
-
+    @property
+    def values_matches_correctly(self):
         is_correct_value = False
         try:
+            if self.tesseract_value is None:
+                return False
             is_correct_value = int(self.tesseract_value) == int(settings.get_true_value_for_lcd(self.index))
         except ValueError:
             pass
+        return is_correct_value
+
+    def update_tess_value_label(self):
+        self.tesseract_label.config(text=f"Tess: {self.tesseract_value}")
+
+        is_correct_value = self.values_matches_correctly
+
         # self.indicator_label is green if correct, red otherwise
         self.indicator_label.delete("all")
-        if is_correct_value:
-            self.indicator_label.create_oval(0, 0, 20, 20, fill="green")
-        else:
-            self.indicator_label.create_oval(0, 0, 20, 20, fill="red")
+        self.indicator_label.create_oval(2, 2, self.indicator_size-2, self.indicator_size-2, fill="green" if is_correct_value else "red")
 
     def refresh_image(self, get_new_frame: bool = False):
         settings = self.settings_provider()
@@ -159,12 +166,11 @@ class LCDEditor(tkinter.Frame):
 
         # Lets look at 5*5 video frames from the movie
         total_frames = self.movie.frame_count
-        frames_per_index = total_frames / 25
         for i in range(self.num_grid_items):
             column = (i % self.grid_rows)
             row = i // self.grid_cols
 
-            frame_number = int(i * frames_per_index)
+            frame_number = self.compute_frame_number(total_frames, i)
             cell = LCDCell(frame_number=frame_number, movie=self.movie, settings_provider=self.settings_provider, master=self.lcd_preview_canvas, index=i)
             cell.grid(row=row, column=column)
             self.lcd_grid_views.append(cell)
@@ -174,6 +180,21 @@ class LCDEditor(tkinter.Frame):
         self.statistics_label.grid(row=1, column=0, columnspan=2)
 
         self.slow_lcd_refresh()
+
+    def compute_frame_number(self, total_frames, i):
+        frames_per_second = self.movie.frame_rate
+        initial_offset = (frames_per_second * 6) + 51
+        total_frames -= initial_offset
+        frames_per_index = total_frames / self.num_grid_items
+        frame_number = initial_offset + int(i * frames_per_index)
+
+        # a good frame lasts 2 seconds
+        # the target indicator is 1 sec.  So, each reading is 3s in duration.
+        # number of frames in 3s is 90
+        # quantize to 3 seconds
+        frames_per_3_seconds = int(frames_per_second * 3)
+        frame_number = int(frame_number / frames_per_3_seconds) * frames_per_3_seconds
+        return initial_offset + frame_number
 
     def settings_provider(self):
         return self.settings
@@ -185,7 +206,7 @@ class LCDEditor(tkinter.Frame):
         area_ui = AreaEditingUI(master=self.properties_panel, the_settings=self.settings, update_preview_callback=self.update_everything)
         area_ui.grid(row=0, column=0, sticky="nw")
 
-        tuning_props = TuningUI(master=self.properties_panel, update_preview_callback=self.update_for_tesseract_and_get_new_vaule, the_settings=self.settings)
+        tuning_props = TuningUI(master=self.properties_panel, update_preview_callback=self.update_for_tesseract_and_get_new_value, change_on_enter_only=True, the_settings=self.settings)
         tuning_props.grid(row=1, column=0, sticky="nw")
 
         # Followed by a 'save' button
@@ -193,23 +214,34 @@ class LCDEditor(tkinter.Frame):
         save_button.grid(row=100, column=0)
 
     def update_everything(self):
-        for cell in self.lcd_grid_views:
-            cell.refresh_image()
+        self.update_for_tesseract_and_get_new_value()
 
-    def update_for_tesseract_and_get_new_vaule(self):
-        for cell in self.lcd_grid_views:
-            cell.refresh_image()
+    def update_for_tesseract_and_get_new_value(self):
+        self.slow_lcd_refresh(immediate=True)
 
-    def slow_lcd_refresh(self):
+    def slow_lcd_refresh(self, immediate: bool = False):
+        for cell in self.lcd_grid_views:
+            cell.tesseract_value = None
+
         # Refresh the images slowly, so the UI is still responsive
         def load_next_empty_cell():
             for cell in self.lcd_grid_views:
                 if cell.tesseract_value is None:
                     cell.refresh_image()
-                    self.after(50, load_next_empty_cell)
+                    self.after(20, load_next_empty_cell)
+                    self.recompute_stats()
                     return
 
-        self.after(1000, load_next_empty_cell)
+        self.after(0 if immediate else 1000, load_next_empty_cell)
+
+    def recompute_stats(self):
+        # Recompute the statistics
+        number_of_cells_correct = 0
+        for cell in self.lcd_grid_views:
+            if cell.values_matches_correctly:
+                number_of_cells_correct += 1
+
+        self.statistics_label.config(text=f"Statistics: {number_of_cells_correct}/{self.num_grid_items} correct = {number_of_cells_correct / self.num_grid_items * 100:.0f}%")
 
 
 print("Loading LCD Editor...")

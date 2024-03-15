@@ -97,8 +97,10 @@ class AreaEditingUI(tkinter.Frame, EditingMixin):
 
 
 class TuningUI(tkinter.Frame, EditingMixin):
-    def __init__(self, master, the_settings: Settings, update_preview_callback, *args, **kwargs):
+    def __init__(self, master, the_settings: Settings, update_preview_callback, change_on_enter_only: bool = False,
+                 *args, **kwargs):
         self.settings = the_settings
+        self.change_on_enter_only = change_on_enter_only
         self.update_preview_callback = update_preview_callback
         super().__init__(master, *args, **kwargs)
         self.create_widgets()
@@ -196,10 +198,12 @@ class TuningUI(tkinter.Frame, EditingMixin):
 
             self.get_int_from_entry(event, update_lcd_blur_v)
 
-        low_h_entry.bind("<KeyRelease>", update_low_h)
-        low_s_entry.bind("<KeyRelease>", update_low_s)
-        low_v_entry.bind("<KeyRelease>", update_low_v)
-        upper_h_entry.bind("<KeyRelease>", update_upper_h)
-        upper_s_entry.bind("<KeyRelease>", update_upper_s)
-        upper_v_entry.bind("<KeyRelease>", update_upper_v)
-        lcd_blur_entry.bind("<KeyRelease>", update_lcd_blur)
+        binding_name = self.change_on_enter_only and "<Return>" or "<KeyRelease>"
+
+        low_h_entry.bind(binding_name, update_low_h)
+        low_s_entry.bind(binding_name, update_low_s)
+        low_v_entry.bind(binding_name, update_low_v)
+        upper_h_entry.bind(binding_name, update_upper_h)
+        upper_s_entry.bind(binding_name, update_upper_s)
+        upper_v_entry.bind(binding_name, update_upper_v)
+        lcd_blur_entry.bind(binding_name, update_lcd_blur)

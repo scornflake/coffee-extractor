@@ -5,6 +5,11 @@ L: 140, 100, 230
 H: 195, 255, 255
 https://github.com/DevashishPrasad/LCD-OCR
 
+# Detector Magically Good before I screwed with it
+L: 20, 120, 200 
+H: 160, 250, 255
+Blur: 2
+
 # Good for v1
 Skew: -6
 L: 30, 230, 110
