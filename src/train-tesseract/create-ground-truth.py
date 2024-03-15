@@ -18,7 +18,7 @@ To get this to work, I had to install the fonts I wanted to use, on the OS
 class GroundTruthCreation:
     def __init__(self):
         # number of ground truths to create
-        self.number_of_truths_to_create = 2000
+        self.number_of_truths_to_create = 8000
 
         # Scan the fonts folder. Only the top level. Make up a list of fonts
         self.fonts_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'fonts')
@@ -36,22 +36,20 @@ class GroundTruthCreation:
         if not os.path.exists(self.ground_truth_output_folder):
             os.makedirs(self.ground_truth_output_folder)
 
-    def create_truth_i(self, iteration: int, use_dots: bool = True):
-        flags = "dots" if use_dots else "no-dots"
-        filename = f"genecafe_{iteration}_{flags}"
+    def create_truth_i(self, iteration: int):
+        filename = f"genecafe_{iteration}"
         ground_truth_file = os.path.join(self.ground_truth_output_folder, filename + ".gt.txt")
         with open(ground_truth_file, 'w') as f:
             # Create a random number from 0 to 250
             random_number = str(iteration % 250)
             # random_number = str(randint(0, 250))
             # put dots in between the digits, randomly
-            if use_dots:
-                if len(random_number) == 2:
-                    random_number = random_number[0] + '.' + random_number[1]
-                elif len(random_number) == 3:
-                    random_number = random_number[0] + '.' + random_number[1] + '.' + random_number[2]
-            # Write that to the ground truth file
             f.write(random_number)
+
+            # Now write another 10 numbers, random from 1-10000 as doubles
+            for _ in range(20):
+                f.write(" ")
+                f.write(str(randint(1, 1000000) / 100))
 
         def create_image_from_text(iter: int):
             # Now use text2image to create an image of this text, using one of the fonts
@@ -65,15 +63,14 @@ class GroundTruthCreation:
             args = [
                 "text2image",
                 "--fonts_dir=" + self.fonts_folder,
-                "--resolution=300",
                 f"--exposure={exposure}",
                 "--font", name_of_font_excluding_extension,
                 "--text", ground_truth_file,
                 "--outputbase", os.path.join(self.ground_truth_output_folder, filename),
                 "--ptsize=20",
-                "--xsize=600",
+                "--xsize=7000",
                 "--ysize=300",
-                "--unicharset_file=", os.path.join(self.path_to_self, 'unicharset.txt'),
+                "--unicharset_file=", os.path.join(self.path_to_self, 'data/Latin.unicharset'),
             ]
 
             args.append("--rotate_image={}".format("true" if use_rotation else "false"))
@@ -87,8 +84,7 @@ class GroundTruthCreation:
         start = i * chunk_size
         end = start + chunk_size
         for j in range(start, end):
-            self.create_truth_i(j, use_dots=False)
-            # self.create_truth_i(j, use_dots=True)
+            self.create_truth_i(j)
 
             # if j > 10:
             #     exit(0)
