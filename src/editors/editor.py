@@ -1,3 +1,4 @@
+import os
 import tkinter
 
 from editors.components import AreaEditingUI, TuningUI
@@ -231,6 +232,11 @@ def save_and_quit():
     editor.save_settings()
     root.quit()
 
+
+# tessdata_local_path is at ../../data/resseract/tessdata
+tessdata_local_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../data/tesseract/tessdata")
+print("should be in : ", tessdata_local_path)
+os.environ["TESSDATA_PREFIX"] = tessdata_local_path
 
 # Load the settings from the input_spec.json file
 settings = Settings(args.args.input_spec)

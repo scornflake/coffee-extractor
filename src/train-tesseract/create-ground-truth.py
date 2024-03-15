@@ -18,7 +18,7 @@ To get this to work, I had to install the fonts I wanted to use, on the OS
 class GroundTruthCreation:
     def __init__(self):
         # number of ground truths to create
-        self.number_of_truths_to_create = 1000
+        self.number_of_truths_to_create = 2000
 
         # Scan the fonts folder. Only the top level. Make up a list of fonts
         self.fonts_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'fonts')
@@ -36,18 +36,16 @@ class GroundTruthCreation:
         if not os.path.exists(self.ground_truth_output_folder):
             os.makedirs(self.ground_truth_output_folder)
 
-    def create_truth_i(self, iteration: int):
-        # Create a ground truth file
-        ground_truth_file = os.path.join(self.ground_truth_output_folder, f"genecafe_{iteration}.gt.txt")
-        if iteration == 100:
-            # exit the program
-            exit(0)
+    def create_truth_i(self, iteration: int, use_dots: bool = True):
+        flags = "dots" if use_dots else "no-dots"
+        filename = f"genecafe_{iteration}_{flags}"
+        ground_truth_file = os.path.join(self.ground_truth_output_folder, filename + ".gt.txt")
         with open(ground_truth_file, 'w') as f:
             # Create a random number from 0 to 250
             random_number = str(iteration % 250)
             # random_number = str(randint(0, 250))
             # put dots in between the digits, randomly
-            if randint(0, 1) == 1:
+            if use_dots:
                 if len(random_number) == 2:
                     random_number = random_number[0] + '.' + random_number[1]
                 elif len(random_number) == 3:
@@ -55,51 +53,54 @@ class GroundTruthCreation:
             # Write that to the ground truth file
             f.write(random_number)
 
-        # Now use text2image to create an image of this text, using one of the fonts
-        font_to_use = self.fonts[iteration % len(self.fonts)]
-        font_without_path = os.path.basename(font_to_use)
-        name_of_font_excluding_extension = font_without_path.split('.')[0]
-        use_distortion = iteration % 2 == 0
-        use_rotation = True
-        # noinspection PyListCreation
-        args = [
-            "text2image",
-            "--fonts_dir=" + self.fonts_folder,
-            "--resolution=400",
-            "--font", name_of_font_excluding_extension,
-            "--text", ground_truth_file,
-            "--outputbase", os.path.join(self.ground_truth_output_folder, f"genecafe_{iteration}"),
-            "--ptsize=20",
-            "--xsize=600",
-            "--ysize=300",
-            "--unicharset_file=", os.path.join(self.path_to_self, 'unicharset.txt'),
-        ]
+        def create_image_from_text(iter: int):
+            # Now use text2image to create an image of this text, using one of the fonts
+            font_to_use = self.fonts[iter % len(self.fonts)]
+            font_without_path = os.path.basename(font_to_use)
+            name_of_font_excluding_extension = font_without_path.split('.')[0]
+            use_distortion = iter % 2 == 0
+            use_rotation = True
+            exposure = randint(-10, 0)
+            # noinspection PyListCreation
+            args = [
+                "text2image",
+                "--fonts_dir=" + self.fonts_folder,
+                "--resolution=300",
+                f"--exposure={exposure}",
+                "--font", name_of_font_excluding_extension,
+                "--text", ground_truth_file,
+                "--outputbase", os.path.join(self.ground_truth_output_folder, filename),
+                "--ptsize=20",
+                "--xsize=600",
+                "--ysize=300",
+                "--unicharset_file=", os.path.join(self.path_to_self, 'unicharset.txt'),
+            ]
 
-        args.append("--rotate_image={}".format("true" if use_rotation else "false"))
-        args.append("--distort_image={}".format("true" if use_distortion else "false"))
+            args.append("--rotate_image={}".format("true" if use_rotation else "false"))
+            args.append("--distort_image={}".format("true" if use_distortion else "false"))
 
-        subprocess.run(args)
+            subprocess.run(args)
 
-    # def remove_data_for(self, gt_txt_file, box_file):
-    #     os.remove(os.path.join(self.ground_truth_output_folder, gt_txt_file))
-    #     print(f"Removed {gt_txt_file} as it has no corresponding .box file")
-    #     # remove .box and also .tif, if they exist
-    #     tif_file = os.path.join(self.ground_truth_output_folder, f"genecafe_{number}.tif")
-    #     if os.path.exists(tif_file):
-    #         os.remove(tif_file)
-    #         print(f"Removed {tif_file}")
-    #     if os.path.exists(box_file):
-    #         os.remove(box_file)
-    #         print(f"Removed {box_file}")
+        create_image_from_text(iter=iteration)
 
     def process_chunk(self, i, chunk_size):
         start = i * chunk_size
         end = start + chunk_size
         for j in range(start, end):
-            self.create_truth_i(j)
+            self.create_truth_i(j, use_dots=False)
+            # self.create_truth_i(j, use_dots=True)
+
+            # if j > 10:
+            #     exit(0)
 
     def perform_training(self):
-        number_of_chunks = min(self.number_of_truths_to_create, 1)
+        # Clear out existing files in the ground truth folder
+        for the_file in os.listdir(self.ground_truth_output_folder):
+            file_path = os.path.join(self.ground_truth_output_folder, the_file)
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+
+        number_of_chunks = min(self.number_of_truths_to_create, 9)
         chunk_size = self.number_of_truths_to_create // number_of_chunks
 
         # Chunk into 10 groups

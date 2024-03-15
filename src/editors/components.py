@@ -14,8 +14,9 @@ class EditingMixin:
 
 
 class AreaEditingUI(tkinter.Frame, EditingMixin):
-    def __init__(self, master, the_settings: Settings, update_preview_callback, *args, **kwargs):
+    def __init__(self, master, the_settings: Settings, update_preview_callback, change_on_enter_only: bool = False, *args, **kwargs):
         self.settings = the_settings
+        self.change_on_enter_only = change_on_enter_only
         self.update_preview_callback = update_preview_callback
         super().__init__(master, *args, **kwargs)
         self.create_widgets()
@@ -89,11 +90,12 @@ class AreaEditingUI(tkinter.Frame, EditingMixin):
 
             self.get_int_from_entry(event, update_height_v)
 
-        skew_entry.bind("<KeyRelease>", update_skew)
-        left_entry.bind("<KeyRelease>", update_left)
-        top_entry.bind("<KeyRelease>", update_top)
-        width_entry.bind("<KeyRelease>", update_width)
-        height_entry.bind("<KeyRelease>", update_height)
+        binding_name = self.change_on_enter_only and "<Return>" or "<KeyRelease>"
+        skew_entry.bind(binding_name, update_skew)
+        left_entry.bind(binding_name, update_left)
+        top_entry.bind(binding_name, update_top)
+        width_entry.bind(binding_name, update_width)
+        height_entry.bind(binding_name, update_height)
 
 
 class TuningUI(tkinter.Frame, EditingMixin):

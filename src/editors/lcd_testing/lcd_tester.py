@@ -162,7 +162,6 @@ class LCDCell(tkinter.Frame):
         resize_image_to_widget(None)
 
 
-
 class LCDEditor(tkinter.Frame):
     def __init__(self, master=None, cnf=None, **kwargs):
         self.statistics_label = None
@@ -240,7 +239,7 @@ class LCDEditor(tkinter.Frame):
         self.settings.write_to_file()
 
     def create_properties_panel(self):
-        area_ui = AreaEditingUI(master=self.properties_panel, the_settings=self.settings, update_preview_callback=self.update_everything)
+        area_ui = AreaEditingUI(master=self.properties_panel, the_settings=self.settings, update_preview_callback=self.update_everything, change_on_enter_only=True)
         area_ui.grid(row=0, column=0, sticky="nw")
 
         tuning_props = TuningUI(master=self.properties_panel, update_preview_callback=self.update_for_tesseract_and_get_new_value, change_on_enter_only=True,
@@ -281,6 +280,11 @@ class LCDEditor(tkinter.Frame):
 
         self.statistics_label.config(text=f"Statistics: {number_of_cells_correct}/{self.num_grid_items} correct = {number_of_cells_correct / self.num_grid_items * 100:.0f}%")
 
+
+# tessdata_local_path is at ../../data/resseract/tessdata
+tessdata_local_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../../data/tesseract/tessdata")
+print("should be in : ", tessdata_local_path)
+os.environ["TESSDATA_PREFIX"] = tessdata_local_path
 
 print("Loading LCD Editor...")
 root = tkinter.Tk()
