@@ -166,11 +166,11 @@ class LCDEditor(tkinter.Frame):
 
         # Lets look at 5*5 video frames from the movie
         total_frames = self.movie.frame_count
+        frames_to_generate = self.movie.get_series_of_quantized_frame_numbers(self.num_grid_items, 0)
         for i in range(self.num_grid_items):
             column = (i % self.grid_rows)
             row = i // self.grid_cols
-
-            frame_number = self.compute_frame_number(total_frames, i)
+            frame_number = frames_to_generate[i]
             cell = LCDCell(frame_number=frame_number, movie=self.movie, settings_provider=self.settings_provider, master=self.lcd_preview_canvas, index=i)
             cell.grid(row=row, column=column)
             self.lcd_grid_views.append(cell)
@@ -180,21 +180,6 @@ class LCDEditor(tkinter.Frame):
         self.statistics_label.grid(row=1, column=0, columnspan=2)
 
         self.slow_lcd_refresh()
-
-    def compute_frame_number(self, total_frames, i):
-        frames_per_second = self.movie.frame_rate
-        initial_offset = (frames_per_second * 6) + 51
-        total_frames -= initial_offset
-        frames_per_index = total_frames / self.num_grid_items
-        frame_number = initial_offset + int(i * frames_per_index)
-
-        # a good frame lasts 2 seconds
-        # the target indicator is 1 sec.  So, each reading is 3s in duration.
-        # number of frames in 3s is 90
-        # quantize to 3 seconds
-        frames_per_3_seconds = int(frames_per_second * 3)
-        frame_number = int(frame_number / frames_per_3_seconds) * frames_per_3_seconds
-        return initial_offset + frame_number
 
     def settings_provider(self):
         return self.settings
