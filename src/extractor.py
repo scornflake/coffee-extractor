@@ -115,7 +115,10 @@ def extract_images_and_temps_from_video():
     if start_frame_number and end_frame_number:
         frame_range = range(start_frame_number, end_frame_number, int(movie.frame_rate * 15))
     else:
-        frame_range = range(0, movie.frame_count, int(movie.frame_rate * 15))
+        # Load frames to get, from settings
+        frame_range = settings.frame_numbers
+        if frame_range is None or len(frame_range) < 32:
+            frame_range = movie.get_series_of_quantized_frame_numbers(32, settings.frame_offset)
     for frame_number in frame_range:
         time_in_seconds = frame_number / movie.frame_rate
         frame = movie.get_frame_number(frame_number)

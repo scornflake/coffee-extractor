@@ -110,12 +110,17 @@ def extract_digits_from_readout(image, the_settings: Settings):
     return just_the_digits
 
 
+def extract_digits_from_greyscale_readout(image, the_settings: Settings):
+    mask = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 2)
+    return mask
+
+
 def parse_int_via_tesseract(image) -> int or None:
     custom_config = r'--psm 8 -c tessedit_char_whitelist=.0123456789'
     # text = pytesseract.image_to_string(image, config=custom_config, lang="letsgodigital")
     # text = pytesseract.image_to_string(image, config=custom_config, lang="lets")
-    text = pytesseract.image_to_string(image, config=custom_config, lang="genecafe")
-    # text = pytesseract.image_to_string(image, config=custom_config, lang="geneca fefast")
+    # text = pytesseract.image_to_string(image, config=custom_config, lang="genecafe")
+    text = pytesseract.image_to_string(image, config=custom_config, lang="genecafefast")
     # text = pytesseract.image_to_string(image, config=custom_config)
 
     # Strip any '.' from text
@@ -180,10 +185,9 @@ def make_threshold(digital_number_area, lower: int = 127):
     return digital_number_area
 
 
-def sharpen(image):
+def sharpen(image, amount=5):
     # sharpen the image
-    kern_size = 5
-    blurred = cv2.GaussianBlur(image, (kern_size, kern_size), 0)
+    blurred = cv2.GaussianBlur(image, (amount, amount), 0)
     return cv2.addWeighted(image, 1.5, blurred, -0.5, 0)
 
 
@@ -191,7 +195,24 @@ def extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings: Setti
     # Extract the digital area from the frame, and find the temperature
     extracted_frame = get_temperature_part_from_full_frame(frame, the_settings=the_settings)
     extracted_frame = extract_digits_from_readout(extracted_frame, the_settings=the_settings)
+    extracted_frame = cv2.cvtColor(extracted_frame, cv2.COLOR_BGR2GRAY)
+    extracted_frame = extract_digits_from_greyscale_readout(extracted_frame, the_settings=the_settings)
+    return extracted_frame
+    # extracted_frame = sharpen(extracted_frame, amount=23)
+
+    # Try a morphological close
+    kernel1 = cv2.getStructuringElement(cv2.MORPH_OPEN, (3, 3))
+    close = cv2.morphologyEx(extracted_frame, cv2.MORPH_OPEN, kernel1)
+    return close
+    # convert to greyscale
     # extracted_frame = sharpen(extracted_frame)
+
+    div = np.float32(extracted_frame) / (close)
+    extracted_frame = np.uint8(cv2.normalize(div, div, 0, 255, cv2.NORM_MINMAX))
+    return extracted_frame
+
+    # return extracted_frame
+    # return extracted_frame
     # extracted_frame = new_image_from_contours(extracted_frame, thickness=3)
 
     if extracted_frame is None:
@@ -202,12 +223,10 @@ def extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings: Setti
         temps_handler(extracted_frame, frame_number, False)
 
     # Dilate and then erode
-    extracted_frame = cv2.dilate(extracted_frame, None, iterations=3)
-    extracted_frame = cv2.erode(extracted_frame, None, iterations=2)
-    extracted_frame = sharpen(extracted_frame)
-    # return extracted_frame
-    # extracted_frame = cv2.dilate(extracted_frame, None, iterations=1)
+    extracted_frame = cv2.dilate(extracted_frame, None, iterations=2)
+    extracted_frame = cv2.erode(extracted_frame, None, iterations=3)
     # extracted_frame = sharpen(extracted_frame)
+    # return extracted_frame
 
     blur = the_settings.lcd_blur_amount
     if blur > 0:
