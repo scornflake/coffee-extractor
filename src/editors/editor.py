@@ -6,7 +6,7 @@ from src import args
 import cv2
 from PIL import ImageTk, Image
 
-from extraction import parse_int_via_tesseract, extract_lcd_and_ready_for_tesseract2, extract_lcd_and_ready_for_tesseract
+from extraction import parse_int_via_tesseract, extract_lcd_and_ready_for_tesseract
 from movie import Movie
 from settings import Settings
 

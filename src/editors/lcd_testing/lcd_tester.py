@@ -174,8 +174,10 @@ class LCDEditor(tkinter.Frame):
         self.lcd_grid_views = None
         self.lcd_preview_canvas = None
         self.properties_panel = None
-        self.grid_cols = 6
-        self.grid_rows = 6
+
+        grid_size = 6
+        self.grid_cols = grid_size
+        self.grid_rows = grid_size
 
         self.movie = None
         if cnf is None:
@@ -218,7 +220,7 @@ class LCDEditor(tkinter.Frame):
         total_frames = self.movie.frame_count
         frames_to_generate = self.settings.frame_numbers
         if len(frames_to_generate) != self.num_grid_items:
-            self.kill_frames()
+            self.kill_frames_quanized()
         for i in range(self.num_grid_items):
             column = (i % self.grid_rows)
             row = i // self.grid_cols
@@ -256,15 +258,25 @@ class LCDEditor(tkinter.Frame):
         save_button = tkinter.Button(self.properties_panel, text="Save", command=self.save_settings)
         save_button.grid(row=100, column=0, sticky="ne")
 
-        kill_frames_button = tkinter.Button(self.properties_panel, text="Kill Frames", command=self.kill_frames)
+        kill_frames_button = tkinter.Button(self.properties_panel, text="Reset Frames Quantized", command=self.kill_frames_quanized)
         kill_frames_button.grid(row=101, column=0, sticky="ne")
 
-    def kill_frames(self):
-        frames_to_generate = self.movie.get_series_of_quantized_frame_numbers(self.num_grid_items, self.settings.frame_offset)
+        kill2_frames_button = tkinter.Button(self.properties_panel, text="Reset Frames", command=self.kill_frames_not_quantized)
+        kill2_frames_button.grid(row=102, column=0, sticky="ne")
+
+
+    def reset_frame_numbers(self, quantized:bool = False):
+        frames_to_generate = self.movie.get_series_of_quantized_frame_numbers(self.num_grid_items, self.settings.frame_offset, quantized=quantized)
         self.settings.frame_numbers = frames_to_generate
         self.settings.write_to_file()
         LCDCell.clear_frame_cache()
         self.reload_all_movie_frames()
+
+    def kill_frames_not_quantized(self):
+        self.reset_frame_numbers(quantized=False)
+
+    def kill_frames_quanized(self):
+        self.reset_frame_numbers(quantized=True)
 
     def reload_all_movie_frames(self):
         self.slow_lcd_refresh(start_immediately=True, force_get_frames=True)
