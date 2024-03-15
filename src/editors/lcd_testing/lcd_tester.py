@@ -166,7 +166,7 @@ class LCDEditor(tkinter.Frame):
 
         # Lets look at 5*5 video frames from the movie
         total_frames = self.movie.frame_count
-        frames_to_generate = self.movie.get_series_of_quantized_frame_numbers(self.num_grid_items, 0)
+        frames_to_generate = self.movie.get_series_of_quantized_frame_numbers(self.num_grid_items, self.settings.frame_offset)
         for i in range(self.num_grid_items):
             column = (i % self.grid_rows)
             row = i // self.grid_cols
