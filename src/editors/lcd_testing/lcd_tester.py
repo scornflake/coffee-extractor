@@ -43,6 +43,12 @@ class LCDCell(tkinter.Frame):
 
         print(f"[{self.index}]", end="")
 
+    @staticmethod
+    def clear_frame_cache():
+        for file in os.listdir("/tmp"):
+            if file.startswith("lcd_editor_frame_"):
+                os.remove(os.path.join("/tmp", file))
+
     def load_frame(self, use_cache: bool = True):
         path_to_cached_frame = f"/tmp/lcd_editor_frame_{self.frame_number}.png"
         if use_cache and os.path.exists(path_to_cached_frame):
@@ -212,8 +218,7 @@ class LCDEditor(tkinter.Frame):
         total_frames = self.movie.frame_count
         frames_to_generate = self.settings.frame_numbers
         if len(frames_to_generate) != self.num_grid_items:
-            frames_to_generate = self.movie.get_series_of_quantized_frame_numbers(self.num_grid_items, self.settings.frame_offset)
-            self.settings.frame_numbers = frames_to_generate
+            self.kill_frames()
         for i in range(self.num_grid_items):
             column = (i % self.grid_rows)
             row = i // self.grid_cols
@@ -239,10 +244,11 @@ class LCDEditor(tkinter.Frame):
         self.settings.write_to_file()
 
     def create_properties_panel(self):
-        area_ui = AreaEditingUI(master=self.properties_panel, the_settings=self.settings, update_preview_callback=self.update_everything, change_on_enter_only=True)
+        area_ui = AreaEditingUI(master=self.properties_panel, the_settings=self.settings, update_preview_callback=self.reparse_from_tesseract_using_existing_cached_frame,
+                                change_on_enter_only=True)
         area_ui.grid(row=0, column=0, sticky="nw")
 
-        tuning_props = TuningUI(master=self.properties_panel, update_preview_callback=self.update_for_tesseract_and_get_new_value, change_on_enter_only=True,
+        tuning_props = TuningUI(master=self.properties_panel, update_preview_callback=self.reparse_from_tesseract_using_existing_cached_frame, change_on_enter_only=True,
                                 the_settings=self.settings)
         tuning_props.grid(row=1, column=0, sticky="nw")
 
@@ -250,13 +256,23 @@ class LCDEditor(tkinter.Frame):
         save_button = tkinter.Button(self.properties_panel, text="Save", command=self.save_settings)
         save_button.grid(row=100, column=0, sticky="ne")
 
-    def update_everything(self):
-        self.update_for_tesseract_and_get_new_value()
+        kill_frames_button = tkinter.Button(self.properties_panel, text="Kill Frames", command=self.kill_frames)
+        kill_frames_button.grid(row=101, column=0, sticky="ne")
 
-    def update_for_tesseract_and_get_new_value(self):
-        self.slow_lcd_refresh(immediate=True)
+    def kill_frames(self):
+        frames_to_generate = self.movie.get_series_of_quantized_frame_numbers(self.num_grid_items, self.settings.frame_offset)
+        self.settings.frame_numbers = frames_to_generate
+        self.settings.write_to_file()
+        LCDCell.clear_frame_cache()
+        self.reload_all_movie_frames()
 
-    def slow_lcd_refresh(self, immediate: bool = False):
+    def reload_all_movie_frames(self):
+        self.slow_lcd_refresh(start_immediately=True, force_get_frames=True)
+
+    def reparse_from_tesseract_using_existing_cached_frame(self):
+        self.slow_lcd_refresh(start_immediately=True)
+
+    def slow_lcd_refresh(self, start_immediately: bool = False, force_get_frames: bool = False):
         for cell in self.lcd_grid_views:
             cell.tesseract_value = None
 
@@ -264,12 +280,12 @@ class LCDEditor(tkinter.Frame):
         def load_next_empty_cell():
             for cell in self.lcd_grid_views:
                 if cell.tesseract_value is None:
-                    cell.refresh_image()
+                    cell.refresh_image(get_new_frame=force_get_frames)
                     self.after(20, load_next_empty_cell)
                     self.recompute_stats()
                     return
 
-        self.after(0 if immediate else 1000, load_next_empty_cell)
+        self.after(0 if start_immediately else 1000, load_next_empty_cell)
 
     def recompute_stats(self):
         # Recompute the statistics
