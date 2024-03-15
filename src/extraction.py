@@ -114,8 +114,8 @@ def parse_int_via_tesseract(image) -> int or None:
     custom_config = r'--psm 8 -c tessedit_char_whitelist=.0123456789'
     # text = pytesseract.image_to_string(image, config=custom_config, lang="letsgodigital")
     # text = pytesseract.image_to_string(image, config=custom_config, lang="lets")
-    # text = pytesseract.image_to_string(image, config=custom_config, lang="genecafe")
-    text = pytesseract.image_to_string(image, config=custom_config, lang="genecafefast")
+    text = pytesseract.image_to_string(image, config=custom_config, lang="genecafe")
+    # text = pytesseract.image_to_string(image, config=custom_config, lang="geneca fefast")
     # text = pytesseract.image_to_string(image, config=custom_config)
 
     # Strip any '.' from text
