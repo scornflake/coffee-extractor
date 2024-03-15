@@ -39,14 +39,16 @@ class GroundTruthCreation:
     def create_truth_i(self, iteration: int):
         # Create a ground truth file
         ground_truth_file = os.path.join(self.ground_truth_output_folder, f"genecafe_{iteration}.gt.txt")
+        if iteration == 100:
+            # exit the program
+            exit(0)
         with open(ground_truth_file, 'w') as f:
             # Create a random number from 0 to 250
-            random_number = str(randint(0, 250))
+            random_number = str(iteration % 250)
+            # random_number = str(randint(0, 250))
             # put dots in between the digits, randomly
             if randint(0, 1) == 1:
-                if len(random_number) == 1:
-                    random_number = random_number + '.'
-                elif len(random_number) == 2:
+                if len(random_number) == 2:
                     random_number = random_number[0] + '.' + random_number[1]
                 elif len(random_number) == 3:
                     random_number = random_number[0] + '.' + random_number[1] + '.' + random_number[2]
@@ -58,6 +60,7 @@ class GroundTruthCreation:
         font_without_path = os.path.basename(font_to_use)
         name_of_font_excluding_extension = font_without_path.split('.')[0]
         use_distortion = iteration % 2 == 0
+        use_rotation = True
         # noinspection PyListCreation
         args = [
             "text2image",
@@ -72,6 +75,7 @@ class GroundTruthCreation:
             "--unicharset_file=", os.path.join(self.path_to_self, 'unicharset.txt'),
         ]
 
+        args.append("--rotate_image={}".format("true" if use_rotation else "false"))
         args.append("--distort_image={}".format("true" if use_distortion else "false"))
 
         subprocess.run(args)

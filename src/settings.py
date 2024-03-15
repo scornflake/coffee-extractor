@@ -83,6 +83,7 @@ class Settings:
         # all the indexes of self.lcd_testing should be integers
         self.lcd_testing = {int(k): v for k, v in self.lcd_testing.items()}
         self.frame_offset = self.input_spec.get("frame_offset", 0)
+        self.frame_numbers = self.input_spec.get('frame_numbers', [])
 
         self.validate()
 
@@ -104,6 +105,7 @@ class Settings:
 
         self.input_spec["lcd_testing"] = self.lcd_testing
         self.input_spec["frame_offset"] = self.frame_offset
+        self.input_spec["frame_numbers"] = self.frame_numbers
 
     def write_to_file(self):
         # Write the input spec to a file
