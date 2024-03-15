@@ -209,8 +209,9 @@ def extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings: Setti
     # extracted_frame = sharpen(extracted_frame)
 
     blur = the_settings.lcd_blur_amount
-    kernel = np.ones((blur, blur), np.float32) / 5
-    extracted_frame = cv2.filter2D(extracted_frame, -1, kernel)
+    if blur > 0:
+        kernel = np.ones((blur, blur), np.float32) / 5
+        extracted_frame = cv2.filter2D(extracted_frame, -1, kernel)
 
     if temps_handler:
         temps_handler(extracted_frame, frame_number, True)
