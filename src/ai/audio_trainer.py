@@ -169,6 +169,13 @@ class Trainer:
         plt.legend()
         plt.show()
 
+        # Save the plots as images
+        graphs_folder = os.path.join(model_root_folder, "graphs")
+        if not os.path.exists(graphs_folder):
+            os.makedirs(graphs_folder)
+        plot_filename = os.path.join(graphs_folder, "loss.png")
+        plt.savefig(plot_filename)
+
         print("Training complete. Testing on test_data set...")
         loss, accuracy = self.model.evaluate(test_data)
 
@@ -186,6 +193,10 @@ class Trainer:
         plt.xlabel('Prediction')
         plt.ylabel('True')
         plt.show()
+
+        # Save the confusion matrix as an image
+        plot_filename = os.path.join(graphs_folder, "confusion_matrix.png")
+        plt.savefig(plot_filename)
 
     def test_against_wav_file(self, wav_file_name):
         wav = self.load_wav_16k_mono(wav_file_name)
