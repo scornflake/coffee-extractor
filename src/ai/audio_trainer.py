@@ -196,6 +196,7 @@ class Trainer:
 
         # Save the confusion matrix as an image
         plot_filename = os.path.join(graphs_folder, "confusion_matrix.png")
+        print(f"Saving confusion matrix to file: {plot_filename}")
         plt.savefig(plot_filename)
 
     def test_against_wav_file(self, wav_file_name):
