@@ -43,9 +43,10 @@ def extract_digits_from_readout(image, the_settings: Settings):
     lower = np.array([the_settings.low_threshold.h, the_settings.low_threshold.s, the_settings.low_threshold.v])
     upper = np.array([the_settings.upper_threshold.h, the_settings.upper_threshold.s, the_settings.upper_threshold.v])
     mask = cv2.inRange(img_hsv, lower, upper)
-    just_the_digits = cv2.bitwise_and(inverted, inverted, mask=mask)
 
-    return just_the_digits
+    return mask
+    # just_the_digits = cv2.bitwise_and(inverted, inverted, mask=mask)
+    # return just_the_digits
 
 
 def extract_digits_from_greyscale_readout(image, the_settings: Settings):
@@ -101,26 +102,29 @@ def extract_lcd_and_ready_for_tesseract(frame, frame_number, the_settings: Setti
     # Extract the digital area from the frame, and find the temperature
     extracted_frame = get_temperature_part_from_full_frame(frame, the_settings=the_settings)
     extracted_frame = extract_digits_from_readout(extracted_frame, the_settings=the_settings)
-    extracted_frame = cv2.cvtColor(extracted_frame, cv2.COLOR_BGR2GRAY)
-    # extracted_frame = extract_digits_from_greyscale_readout(extracted_frame, the_settings=the_settings)
-    # invert
+
+
+    # invert the extracted frame
     extracted_frame = cv2.bitwise_not(extracted_frame)
-    # return extracted_frame
-    # extracted_frame = sharpen(extracted_frame, amount=23)
-
-    # Try a morphological close
-    kernel1 = cv2.getStructuringElement(cv2.MORPH_OPEN, (7, 7))
-    close = cv2.morphologyEx(extracted_frame, cv2.MORPH_OPEN, kernel1)
-    return close
-
-    div = np.float32(extracted_frame) / (close)
-    extracted_frame = np.uint8(cv2.normalize(div, div, 0, 255, cv2.NORM_MINMAX))
     return extracted_frame
 
-    # return extracted_frame
-    # return extracted_frame
-    # extracted_frame = new_image_from_contours(extracted_frame, thickness=3)
+    # extracted_frame = cv2.cvtColor(extracted_frame, cv2.COLOR_BGR2GRAY)
+    # extracted_frame = extract_digits_from_greyscale_readout(extracted_frame, the_settings=the_settings)
+    # extracted_frame = sharpen(extracted_frame, amount=23)
 
+                    # # Try a morphological close
+                    # kernel1 = cv2.getStructuringElement(cv2.MORPH_OPEN, (7, 7))
+                    # close = cv2.morphologyEx(extracted_frame, cv2.MORPH_OPEN, kernel1)
+                    # return close
+                    #
+                    # div = np.float32(extracted_frame) / (close)
+                    # extracted_frame = np.uint8(cv2.normalize(div, div, 0, 255, cv2.NORM_MINMAX))
+                    # return extracted_frame
+
+    # return extracted_frame
+    # return extracted_frame
+    extracted_frame = new_image_from_contours(extracted_frame, thickness=3)
+    return extracted_frame
     if extracted_frame is None:
         print("No digits found in frame", frame_number)
         return None

@@ -5,6 +5,7 @@ matplotlib==3.8.3
 numpy==1.26.4
 oauthlib==3.2.2
 opencv-python==4.9.0.80
+openpyxl==3.1.2
 pandas==2.2.1
 PyAudio==0.2.14
 pytesseract==0.3.10

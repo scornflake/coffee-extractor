@@ -3,7 +3,7 @@ version: '3.8'
 services:
   extractor:
     image: coffee:latest
-    restart: no
+    restart: "no"
     build:
       context: .
     working_dir: /input-data-folder
@@ -19,7 +19,7 @@ services:
 
   trainer:
     image: coffee:latest
-    restart: no
+    restart: "no"
     build:
       context: .
     command: python /src/ai/audio_trainer.py /data-series --epochs 60
@@ -31,7 +31,7 @@ services:
 
   learning:
     image: coffee:latest
-    restart: no
+    restart: "no"
     build:
       context: .
     command: python /src/learning/training-example-01.py
@@ -44,7 +44,7 @@ services:
     image: tensorflow/tensorflow:latest-gpu-jupyter
     ports:
       - "8888:8888"
-    restart: no
+    restart: "no"
     volumes:
       - ./src:/tf
       - ./data:/data
