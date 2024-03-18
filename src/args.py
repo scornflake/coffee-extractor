@@ -9,6 +9,7 @@ parser.add_argument("--tesseract", action=argparse.BooleanOptionalAction, help='
 parser.add_argument("--temps", action=argparse.BooleanOptionalAction)
 parser.add_argument("--audio", action=argparse.BooleanOptionalAction)
 parser.add_argument("--video", action=argparse.BooleanOptionalAction)
+parser.add_argument('--a1', type=int, help='Preprocess audio v1', action=argparse.BooleanOptionalAction)
 args = parser.parse_args()
 
 # Check that required args are given

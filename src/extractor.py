@@ -6,6 +6,7 @@ import time
 import cv2
 
 from args import args
+from audio.audio_utils import extract_percussive, save_audio_data_to_wav
 from extraction import find_temperature_of_frame
 from movie import Movie
 from settings import Settings
@@ -33,6 +34,7 @@ save_images_to_tesseract = args.tesseract
 save_temps = args.temps
 extract_audio = args.audio
 extract_video = args.video
+do_a1_audio = args.a1
 
 json_output = {
     "images": []
@@ -168,31 +170,35 @@ def extract_images_and_temps_from_video():
 
 
 def extract_audio_from_movie():
+
     # Extract the audio from the movie file, and write this as audio.wav to the output directory
     all_of_audio_file = settings.input_file_path("all_audio.wav")
     subprocess.run(['ffmpeg', '-y', '-i', settings.absolute_movie_file, '-vn', all_of_audio_file])
+
+    def extract_sub_audio(output_label_name, start, end):
+        output_file = settings.output_filename(output_label_name, extension='wav')
+        subprocess.run(
+            ['ffmpeg', '-y', '-i', all_of_audio_file, '-ss', start, '-to', end, output_file])
+
+        if do_a1_audio:
+            wav, sample_rate = extract_percussive(output_file)
+            save_audio_data_to_wav(output_file, wav, sample_rate)
 
     # Create first_crack and second_crack audio files, bdased on the input spec
     first_crack_start = settings.first_crack_start
     first_crack_end = settings.first_crack_end
 
     # Use ffmpeg to extract the audio from first_crack_start to first_crack_end
-    first_crack_audio_file = settings.output_filename('first_crack', extension='wav')
-    subprocess.run(
-        ['ffmpeg', '-y', '-i', all_of_audio_file, '-ss', first_crack_start, '-to', first_crack_end, first_crack_audio_file])
+    extract_sub_audio('first_crack', first_crack_start, first_crack_end)
 
     second_crack_start = settings.second_crack_start
     second_crack_end = settings.second_crack_end
 
     # Use ffmpeg to extract the audio from second_crack_start to second_crack_end
-    second_crack_audio_file = settings.output_filename('second_crack', extension='wav')
-    subprocess.run(
-        ['ffmpeg', '-y', '-i', all_of_audio_file, '-ss', second_crack_start, '-to', second_crack_end, second_crack_audio_file])
+    extract_sub_audio('second_crack', second_crack_start, second_crack_end)
 
     # Create a sample of audio, which we'll presume to be background noise
-    background_noise = settings.output_filename('background_noise', extension='wav')
-    subprocess.run(
-        ['ffmpeg', '-y', '-i', all_of_audio_file, '-ss', '60', '-to', '80', background_noise])
+    extract_sub_audio('background_noise', '60', '80')
 
     # Clean up, remove the old audio file
     os.remove(all_of_audio_file)

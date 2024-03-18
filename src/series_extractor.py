@@ -9,6 +9,7 @@ parser.add_argument('-e', "--end", type=int, help='The ending roast number', req
 parser.add_argument("--temps", action=argparse.BooleanOptionalAction)
 parser.add_argument("--audio", action=argparse.BooleanOptionalAction)
 parser.add_argument("--video", action=argparse.BooleanOptionalAction)
+parser.add_argument('--a1', type=int, help='Preprocess audio v1', action=argparse.BooleanOptionalAction)
 parser.add_argument("input_data_folder", type=str, help='The input data folder, where the roast folders are located')
 args = parser.parse_args()
 
@@ -26,14 +27,20 @@ print("Extracting roasts from", args.start, "to", args.end)
 input_folder = args.input_data_folder
 print("Input data folder is", input_folder)
 
+# tessdata_local_path is at ../../data/resseract/tessdata
+tessdata_local_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../data/tesseract/tessdata")
+print("should be in : ", tessdata_local_path)
+os.environ["TESSDATA_PREFIX"] = tessdata_local_path
+
 # Run each extraction, in turn
-for i in range(args.start, args.end+1):
+for i in range(args.start, args.end + 1):
     print("Extracting roast", i)
-    specification = f"/input-data-folder/{i}/input.spec.json"
+    specification = f"{args.input_data_folder}/{i}/input.spec.json"
 
     # the spec must exist
     if not os.path.exists(specification):
         print(f"Error: {specification} does not exist")
         exit(1)
 
-    os.system(f"python3 extractor.py {'--temps' if args.temps else ''} {'--audio' if args.audio else ''} {'--video' if args.video else ''} {specification}")
+    os.system(
+        f"python3 extractor.py {'--temps' if args.temps else ''} {'--a1' if args.a1 else ''} {'--audio' if args.audio else ''} {'--video' if args.video else ''} {specification}")

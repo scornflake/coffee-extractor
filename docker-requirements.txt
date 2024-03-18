@@ -10,6 +10,7 @@ PyAudio==0.2.14
 pytesseract==0.3.10
 seaborn==0.13.2
 six==1.16.0
+librosa==0.10.1
 sounddevice==0.4.6
 tensorboard==2.15.2
 tensorboard-data-server==0.7.2

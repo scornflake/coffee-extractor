@@ -7,7 +7,7 @@ services:
     build:
       context: .
     working_dir: /input-data-folder
-    command: python /src/extractor.py --audio --video input.spec.json
+    command: python /src/extractor.py --audio --video --a1
     environment:
       - TESSDATA_PREFIX=/data/tesseract/tessdata
     volumes:

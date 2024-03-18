@@ -6,11 +6,13 @@ import pandas as pd
 import seaborn as sns
 import tensorflow as tf
 import tensorflow_hub as hub
-import tensorflow_io as tfio
+
+from audio.audio_utils import load_wav_resample_to_16k_mono, load_wav_filter_then_reduce_to_16khz
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 model_root_folder = "/model"
+
 
 @tf.keras.saving.register_keras_serializable()
 class ReduceMeanLayer(tf.keras.layers.Layer):
@@ -58,7 +60,10 @@ class Trainer:
 
         # @tf.function
         def from_tuple_to_wav_label(filename, target):
-            wav_mono = self.load_wav_16k_mono(filename)
+            wav_mono = load_wav_resample_to_16k_mono(filename)
+            # get a string from the tensor for filename
+            # wav_mono = load_wav_filter_then_reduce_to_16khz(filename_str)
+            print("Shape and type of wav: ", wav_mono.shape, wav_mono.dtype)
             return wav_mono, target
 
         # TODO: Normalize the wave data?  Maybe do this after getting it going, to measure the impact
@@ -97,19 +102,6 @@ class Trainer:
         dataset = tf.data.Dataset.from_tensor_slices((filenames, target_indexes))
         # dumpdataset(dataset, "initial", ["wave", "target"])
         return dataset
-
-    # Utility functions for loading audio files and making sure the sample rate is correct.
-    @tf.function
-    def load_wav_16k_mono(self, filename):
-        """ Load a WAV file, convert it to a float tensor, resample to 16 kHz single-channel audio. """
-        file_contents = tf.io.read_file(filename)
-        wav, sample_rate = tf.audio.decode_wav(
-            file_contents,
-            desired_channels=1)
-        wav = tf.squeeze(wav, axis=-1)
-        sample_rate = tf.cast(sample_rate, dtype=tf.int64)
-        wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
-        return wav
 
     def perform_training(self, dataset_with_audio_embeddings):
         # dumpdataset(dataset_with_audio_embeddings, "With Embeddings", ["embeddings", "target"])
@@ -188,7 +180,8 @@ class Trainer:
         plt.show()
 
     def test_against_wav_file(self, wav_file_name):
-        wav = self.load_wav_16k_mono(wav_file_name)
+        wav = load_wav_resample_to_16k_mono(wav_file_name)
+        wav = load_wav_filter_then_reduce_to_16khz(wav)
         embeddings = self._extract_embedding(wav, 0)
         result = self.model(embeddings)
         print(f"Result for file: {wav_file_name}\nResult: {result}")

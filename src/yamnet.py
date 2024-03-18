@@ -9,6 +9,8 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_io as tfio
 
+from audio.audio_utils import load_wav_resample_to_16k_mono
+
 # Get the model
 yamnet_model_handle = 'https://tfhub.dev/google/yamnet/1'
 yamnet_model = hub.load(yamnet_model_handle)
@@ -19,23 +21,8 @@ testing_wav_file_name = tf.keras.utils.get_file('miaow_16k.wav',
                                                 cache_dir='../',
                                                 cache_subdir='test_data')
 
-
-# Utility functions for loading audio files and making sure the sample rate is correct.
-@tf.function
-def load_wav_16k_mono(filename):
-    """ Load a WAV file, convert it to a float tensor, resample to 16 kHz single-channel audio. """
-    file_contents = tf.io.read_file(filename)
-    wav, sample_rate = tf.audio.decode_wav(
-        file_contents,
-        desired_channels=1)
-    wav = tf.squeeze(wav, axis=-1)
-    sample_rate = tf.cast(sample_rate, dtype=tf.int64)
-    wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
-    return wav
-
-
 # Convert to 1ch 16kHz
-testing_wav_data = load_wav_16k_mono(testing_wav_file_name)
+testing_wav_data = load_wav_resample_to_16k_mono(testing_wav_file_name)
 
 # Load the classes able to be recognized from the model
 class_map_path = yamnet_model.class_map_path().numpy().decode('utf-8')
@@ -125,16 +112,15 @@ main_ds = tf.data.Dataset.from_tensor_slices((filenames, targets, folds))
 main_ds.element_spec
 
 
-
-
 def load_wav_for_map(filename, label, fold):
-    return load_wav_16k_mono(filename), label, fold
+    return load_wav_resample_to_16k_mono(filename), label, fold
 
 
 # Map the dataset. Convert from filenames, to the actual data. First column is now the .wav data, followed by label, and fold
 dumpdataset(main_ds, "initial construction", ["filename", "target", "fold"])
 main_ds = main_ds.map(load_wav_for_map)
 main_ds.element_spec
+
 
 # print(f"Wave DataSet: {main_ds}")
 # dumpdataset(main_ds, "Wave Data", ["wav", "target", "fold"])

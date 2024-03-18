@@ -1,4 +1,7 @@
 - normalize the audio [-1.0, 1.0] (aparently load_wav is doing this)
+- use librosa utils (written), cna't get training to work. fails with errors relating to tf.function
+- need support for multiple 1st crack times, so we can better isolate the 1st crack sound
+  - r4: has them at 16:24,16:30,17:01
 
 # Detect v2 lower/upper
 L: 140, 100, 230
