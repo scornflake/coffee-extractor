@@ -181,7 +181,7 @@ def extract_audio_from_movie():
             ['ffmpeg', '-y', '-i', all_of_audio_file, '-ss', start, '-to', end, output_file])
 
         if do_a1_audio:
-            wav, sample_rate = extract_percussive(output_file)
+            wav, sample_rate = extract_percussive(output_file,  margin=4)
             save_audio_data_to_wav(output_file, wav, sample_rate)
 
     # Create first_crack and second_crack audio files, bdased on the input spec

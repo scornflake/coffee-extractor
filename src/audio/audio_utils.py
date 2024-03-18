@@ -7,7 +7,8 @@ import tensorflow_io as tfio
 def load_wav_resample_to_16k_mono(filename):
     """ Load a WAV file, convert it to a float tensor, resample to 16 kHz single-channel audio. """
     wav, sample_rate = load_wav_native_mono(filename)
-    wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
+    if sample_rate != 16000:
+        wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
     return wav
 
 
@@ -25,8 +26,9 @@ def load_wav_native_mono(filename) -> (tf.Tensor, tf.Tensor):
 
 @tf.function
 def load_wav_filter_then_reduce_to_16khz(filename):
-    wav, sample_rate = extract_percussive(filename)
-    wav = librosa.resample(wav, orig_sr=sample_rate, target_sr=16000)
+    wav, sample_rate = extract_percussive(filename, margin=4)
+    if sample_rate != 16000:
+        wav = librosa.resample(wav, orig_sr=sample_rate, target_sr=16000)
     # convert to tensor
     wav = tf.convert_to_tensor(wav)
     return wav

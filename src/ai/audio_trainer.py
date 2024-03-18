@@ -12,7 +12,7 @@ from audio.audio_utils import load_wav_resample_to_16k_mono, load_wav_filter_the
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 model_root_folder = "/model"
-
+# If it doesn't exist, use a sibling folder to the data series folder
 
 @tf.keras.saving.register_keras_serializable()
 class ReduceMeanLayer(tf.keras.layers.Layer):
@@ -193,7 +193,7 @@ class Trainer:
 
     def test_against_wav_file(self, wav_file_name):
         wav = load_wav_resample_to_16k_mono(wav_file_name)
-        wav = load_wav_filter_then_reduce_to_16khz(wav)
+        # wav = load_wav_filter_then_reduce_to_16khz(wav)
         embeddings = self._extract_embedding(wav, 0)
         result = self.model(embeddings)
         print(f"Result for file: {wav_file_name}\nResult: {result}")
@@ -262,6 +262,11 @@ def process_args():
 if __name__ == "__main__":
     args = process_args()
     data_series_folder = args.data
+
+    # If model_root_folder doesn't exist, use a sibling folder to the data series folder
+    if not os.path.exists(model_root_folder):
+        model_root_folder = os.path.join(data_series_folder, "../model")
+
     trainer = Trainer(data_series_folder, epochs=args.epochs)
     trainer.train_audio_from_data_folder()
     trainer.save_model()
